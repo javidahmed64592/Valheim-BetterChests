@@ -1,0 +1,22 @@
+name: Package for Thunderstore
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - name: Build & Package
+        run: bash package.sh
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.NAMESPACE }}-${{ env.NAME }}-${{ env.VERSION }}
+          path: dist/${{ env.NAMESPACE }}-${{ env.NAME }}-${{ env.VERSION }}/
