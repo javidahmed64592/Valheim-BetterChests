@@ -36,6 +36,7 @@ internal static class KeyHintUI
 
     private static readonly HintDef[] Hints =
     [
+        new HintDef { Label = "Take all", Keys = [() => BetterChestsPlugin._takeAllKey], Visibility = HintVisibility.ContainerOnly },
         new HintDef { Label = "Place stacks", Keys = [() => BetterChestsPlugin._placeStacksKey], Visibility = HintVisibility.ContainerOnly },
         new HintDef { Label = "Sort", Keys = [() => BetterChestsPlugin._sortKey], Visibility = HintVisibility.ContainerOnly },
         new HintDef

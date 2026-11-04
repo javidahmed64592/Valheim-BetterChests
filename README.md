@@ -10,12 +10,13 @@ Enhances chests with additional features like sorting and auto-depositing!
 
 | Key | Action                                                                         |
 | --- | ------------------------------------------------------------------------------ |
+| `H` | Take all: move everything in the open chest into your inventory.            |
 | `F` | Place stacks: move items onto matching stacks in the open chest.               |
 | `G` | Sort the open chest.                                                           |
 | `R` | Take one fewer item when splitting a stack (Shift+click). Hold to keep going.  |
 | `T` | Take one more item when splitting a stack (Shift+click). Hold to keep going.   |
 
-The keys are listed in the inventory's key hints and can be rebound from the in-game controls menu.
+The keys are listed in the inventory's key hints. All of them can be changed, see [Configuration](#configuration).
 
 ## Auto Deposit
 
@@ -41,6 +42,9 @@ The number keys, arrow keys and Enter still work as before.
 
 Settings are in the BepInEx config file `javidahmed64592.betterchests.cfg`.
 You can change the keys, turn auto deposit off, and change how far away chests are used for dropped items (10m by default).
+
+The keys can also be changed in game from **Settings > Mod Settings** (added by Jotunn): open the BetterChests section, click a key and press the new one.
+The key hints update straight away.
 
 ## License
 

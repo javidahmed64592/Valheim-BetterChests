@@ -202,7 +202,7 @@ internal static class ChestSort
     }
 
     /// <summary>
-    /// The place stacks and sort keys work while a chest is open (and the split dialog isn't).
+    /// The take all, place stacks and sort keys work while a chest is open (and the split dialog isn't).
     /// </summary>
     [HarmonyPatch(typeof(InventoryGui), "Update")]
     private static class InventoryGui_Update_Patch
@@ -218,7 +218,11 @@ internal static class ChestSort
                 return;
             }
 
-            if (BetterChestsPlugin._placeStacksKey.Down())
+            if (BetterChestsPlugin._takeAllKey.Down())
+            {
+                __instance.OnTakeAll();
+            }
+            else if (BetterChestsPlugin._placeStacksKey.Down())
             {
                 __instance.OnStackAll();
             }

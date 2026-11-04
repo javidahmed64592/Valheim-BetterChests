@@ -21,6 +21,7 @@ public class BetterChestsPlugin : BaseUnityPlugin
 
     internal static ManualLogSource _log;
 
+    internal static Keybind _takeAllKey;
     internal static Keybind _placeStacksKey;
     internal static Keybind _sortKey;
     internal static Keybind _splitDecreaseKey;
@@ -32,6 +33,9 @@ public class BetterChestsPlugin : BaseUnityPlugin
     {
         _log = Logger;
 
+        _takeAllKey = BindKey("Take All", "TakeAll", KeyCode.H,
+            "While a chest is open, moves everything in it into your inventory " +
+            "(the same as the \"Take all\" button).");
         _placeStacksKey = BindKey("Place Stacks", "PlaceStacks", KeyCode.F,
             "While a chest is open, moves items from your inventory onto matching stacks in the chest " +
             "(the same as the \"Place stacks\" button).");
@@ -56,7 +60,7 @@ public class BetterChestsPlugin : BaseUnityPlugin
     private Keybind BindKey(string configName, string buttonName, KeyCode defaultKey, string description)
     {
         ConfigEntry<KeyCode> entry = Config.Bind("Keybinds", configName, defaultKey,
-            description + " Rebindable from the in-game controls menu.");
+            description + " Also rebindable in game from Settings > Mod Settings.");
 
         string name = "BetterChests_" + buttonName;
         InputManager.Instance.AddButton(PluginGuid, new ButtonConfig
