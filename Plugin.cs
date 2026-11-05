@@ -6,6 +6,7 @@ using HarmonyLib;
 
 using Jotunn.Configs;
 using Jotunn.Managers;
+using Jotunn.Utils;
 
 using UnityEngine;
 
@@ -13,11 +14,12 @@ namespace BetterChests;
 
 [BepInPlugin(PluginGuid, PluginName, PluginVersion)]
 [BepInDependency(Jotunn.Main.ModGuid)]
+[NetworkCompatibility(CompatibilityLevel.NotEnforced, VersionStrictness.None)]
 public class BetterChestsPlugin : BaseUnityPlugin
 {
     public const string PluginGuid = "javidahmed64592.betterchests";
     public const string PluginName = "BetterChests";
-    public const string PluginVersion = "0.1.0";
+    public const string PluginVersion = "0.1.1";
 
     internal static ManualLogSource _log;
 

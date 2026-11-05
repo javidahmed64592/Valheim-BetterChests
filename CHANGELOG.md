@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1
+
+- Declared the mod as client side to Jotunn, so servers and other players are never required to have it installed.
+
 ## 0.1.0
 
 - Initial release.
