@@ -33,12 +33,7 @@ Only chests you could open yourself are used: not private chests of other player
 
 The open chest gets a **Deposit all** button under **Take all**.
 It moves everything in your inventory into the chest, except your hotbar (the top row of your inventory) and anything you have equipped, so you can empty your bags after an adventure without losing your gear.
-
 To keep other items too, such as your food, hold **Alt** and right-click (Mouse 1) them in your inventory.
-Marked items get a gold frame around their slot and stay in your inventory when you deposit all.
-Do the same again to unmark an item.
-The mark stays with the item when you move it around your inventory, and is saved with your character.
-Items on your hotbar or equipped can't be marked, since they are never deposited anyway.
 
 ## Sort
 
