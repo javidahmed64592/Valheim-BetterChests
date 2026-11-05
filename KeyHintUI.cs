@@ -13,7 +13,8 @@ namespace BetterChests;
 /// <summary>
 /// Adds this mod's keys to the vanilla inventory key hints (bottom of the screen while the inventory is
 /// open). Each hint is a copy of the vanilla "Use" hint of the same row, and they follow the configured
-/// keys. The split amount hint is a copy of the build mode "Rotate" hint, which shows the mouse wheel.
+/// keys. The split amount hint is a copy of the build mode "Rotate" hint, which shows the mouse wheel, and
+/// the keep item hint is a copy of the vanilla "Ctrl + click" drop hint.
 /// </summary>
 internal static class KeyHintUI
 {
@@ -21,7 +22,7 @@ internal static class KeyHintUI
 
     private static readonly Regex WordBreak = new("(?<=[a-z0-9])(?=[A-Z])");
 
-    private enum HintVisibility { ContainerOnly = 0, SplitDialogOnly = 1 }
+    private enum HintVisibility { ContainerOnly = 0, SplitDialogOnly = 1, NotSplitting = 2 }
 
     private sealed class HintDef
     {
@@ -35,6 +36,10 @@ internal static class KeyHintUI
         /// Shown with the mouse wheel icon instead of keys.
         /// </summary>
         public bool Scroll;
+        /// <summary>
+        /// Shown as the key plus a right-click, like the vanilla "Ctrl + click" drop hint.
+        /// </summary>
+        public bool WithRightClick;
     }
 
     private static readonly HintDef[] Hints =
@@ -44,6 +49,13 @@ internal static class KeyHintUI
         new HintDef { Label = "Deposit all", Key = () => BetterChestsPlugin._depositAllKey, Visibility = HintVisibility.ContainerOnly },
         new HintDef { Label = "Sort", Key = () => BetterChestsPlugin._sortKey, Visibility = HintVisibility.ContainerOnly },
         new HintDef { Label = "Split amount", Scroll = true, Visibility = HintVisibility.SplitDialogOnly },
+        new HintDef
+        {
+            Label = "Keep when depositing",
+            Key = () => BetterChestsPlugin._keepItemKey,
+            WithRightClick = true,
+            Visibility = HintVisibility.NotSplitting
+        },
     ];
 
     /// <summary>
@@ -57,6 +69,10 @@ internal static class KeyHintUI
         /// Null for hints without a key.
         /// </summary>
         public TMP_Text[] KeyTexts;
+        /// <summary>
+        /// Written after the key in its box: " + Mouse 1" when there is no box of its own for the click.
+        /// </summary>
+        public string[] KeySuffixes;
         public bool Failed;
     }
 
@@ -99,9 +115,12 @@ internal static class KeyHintUI
         for (int i = 0; i < Hints.Length; i++)
         {
             HintDef hint = Hints[i];
-            bool visible = hint.Visibility == HintVisibility.SplitDialogOnly
-                ? splitting
-                : containerOpen && !splitting;
+            bool visible = hint.Visibility switch
+            {
+                HintVisibility.SplitDialogOnly => splitting,
+                HintVisibility.NotSplitting => !splitting,
+                _ => containerOpen && !splitting,
+            };
 
             GameObject item = row.Items[i];
             if (item.activeSelf != visible)
@@ -119,7 +138,8 @@ internal static class KeyHintUI
             TMP_Text text = row.KeyTexts[i];
             if (hint.Key != null && text != null)
             {
-                string keyName = KeyName(hint.Key().Key);
+                KeyCode key = hint.Key().Key;
+                string keyName = (hint.WithRightClick ? ModifierName(key) : KeyName(key)) + row.KeySuffixes[i];
                 if (text.text != keyName)
                 {
                     text.text = keyName;
@@ -150,20 +170,32 @@ internal static class KeyHintUI
         row.Keyboard = (RectTransform)keyboard;
         row.Items = new GameObject[Hints.Length];
         row.KeyTexts = new TMP_Text[Hints.Length];
+        row.KeySuffixes = new string[Hints.Length];
 
         Transform scrollTemplate = FindScrollTemplate(keyHints);
+        Transform clickTemplate = FindClickTemplate(keyboard);
 
         for (int i = 0; i < Hints.Length; i++)
         {
             HintDef hint = Hints[i];
+            row.KeySuffixes[i] = string.Empty;
             if (hint.Scroll)
             {
                 row.Items[i] = CreateScrollHint(hint, template, scrollTemplate, keyboard);
+            }
+            else if (hint.WithRightClick && clickTemplate != null)
+            {
+                row.Items[i] = CreateClickHint(hint, clickTemplate, keyboard);
+                row.KeyTexts[i] = row.Items[i].transform.Find("key_bkg").GetComponentInChildren<TMP_Text>(true);
             }
             else
             {
                 row.Items[i] = CreateItem(hint, template, keyboard);
                 row.KeyTexts[i] = row.Items[i].transform.Find("key_bkg").GetComponentInChildren<TMP_Text>(true);
+                if (hint.WithRightClick)
+                {
+                    row.KeySuffixes[i] = " + " + RightClickName();
+                }
             }
         }
 
@@ -219,6 +251,85 @@ internal static class KeyHintUI
 
         Transform label = rotate.Find("Text");
         return label != null && label.GetComponent<TMP_Text>() != null ? rotate : null;
+    }
+
+    /// <summary>
+    /// A copy of the vanilla "Drop" hint (a label, a key, "+" and a mouse button), showing a right-click.
+    /// </summary>
+    private static GameObject CreateClickHint(HintDef hint, Transform clickTemplate, Transform keyboard)
+    {
+        GameObject item = CreateItem(hint, clickTemplate, keyboard);
+        foreach (string box in new[] { "key_bkg", "key_bkg (2)" })
+        {
+            foreach (TMP_Text text in item.transform.Find(box).GetComponentsInChildren<TMP_Text>(true))
+            {
+                // The game's own scripts on the key labels may write the vanilla keys back.
+                foreach (MonoBehaviour script in text.GetComponents<MonoBehaviour>())
+                {
+                    string ns = script.GetType().Namespace ?? string.Empty;
+                    if (!ns.StartsWith("UnityEngine", System.StringComparison.Ordinal) && !ns.StartsWith("TMPro", System.StringComparison.Ordinal))
+                    {
+                        Object.DestroyImmediate(script);
+                    }
+                }
+            }
+        }
+
+        item.transform.Find("key_bkg (2)").GetComponentInChildren<TMP_Text>(true).text = RightClickName();
+        return item;
+    }
+
+    /// <summary>
+    /// The vanilla "Drop" hint, or failing that any hint shaped like it.
+    /// </summary>
+    private static Transform FindClickTemplate(Transform keyboard)
+    {
+        Transform drop = keyboard.Find("Drop");
+        if (IsKeyPlusKeyHint(drop))
+        {
+            return drop;
+        }
+
+        foreach (Transform child in keyboard)
+        {
+            if (IsKeyPlusKeyHint(child))
+            {
+                return child;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool IsKeyPlusKeyHint(Transform item)
+    {
+        return IsSingleKeyHint(item) && item.Find("plus") != null
+            && item.Find("key_bkg (2)") is Transform second && second.GetComponentInChildren<TMP_Text>(true) != null;
+    }
+
+    /// <summary>
+    /// The game's name for the right mouse button, as its own hints show it ("Mouse 1").
+    /// </summary>
+    private static string RightClickName()
+    {
+        return Localization.instance != null ? Localization.instance.Localize("$button_mouse1") : "Mouse 1";
+    }
+
+    /// <summary>
+    /// Either side of a modifier works, so "LeftAlt" is shown as just "Alt".
+    /// </summary>
+    private static string ModifierName(KeyCode key)
+    {
+        string name = KeyName(key);
+        foreach (string side in new[] { "Left ", "Right " })
+        {
+            if (name.StartsWith(side, System.StringComparison.Ordinal))
+            {
+                return name.Substring(side.Length);
+            }
+        }
+
+        return name;
     }
 
     /// <summary>

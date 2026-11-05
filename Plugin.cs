@@ -19,7 +19,7 @@ public class BetterChestsPlugin : BaseUnityPlugin
 {
     public const string PluginGuid = "javidahmed64592.betterchests";
     public const string PluginName = "BetterChests";
-    public const string PluginVersion = "0.1.1";
+    public const string PluginVersion = "0.2.0";
 
     internal static ManualLogSource _log;
 
@@ -27,6 +27,7 @@ public class BetterChestsPlugin : BaseUnityPlugin
     internal static Keybind _placeStacksKey;
     internal static Keybind _depositAllKey;
     internal static Keybind _sortKey;
+    internal static Keybind _keepItemKey;
 
     private Harmony _harmony;
 
@@ -46,6 +47,9 @@ public class BetterChestsPlugin : BaseUnityPlugin
             "equipped items (the same as the \"Deposit all\" button).");
         _sortKey = BindKey("Sort", "Sort", KeyCode.G,
             "While a chest is open, sorts its contents (the same as the \"Sort\" button).");
+        _keepItemKey = BindKey("Keep Item", "KeepItem", KeyCode.LeftAlt,
+            "Hold and right-click an item in your inventory to mark it to be kept by \"Deposit all\", or to " +
+            "unmark it. The left and right versions of Shift, Ctrl and Alt both work.");
 
         AutoDeposit.BindConfig(Config);
 
@@ -61,7 +65,7 @@ public class BetterChestsPlugin : BaseUnityPlugin
     private Keybind BindKey(string configName, string buttonName, KeyCode defaultKey, string description)
     {
         ConfigEntry<KeyCode> entry = Config.Bind("Keybinds", configName, defaultKey,
-            description + " Also rebindable in game from Settings > Mod Settings.");
+            description);
 
         // Registered so the key shows up as a key binding in Jotunn's Mod Settings menu.
         InputManager.Instance.AddButton(PluginGuid, new ButtonConfig
@@ -95,5 +99,28 @@ internal sealed class Keybind(ConfigEntry<KeyCode> entry)
     public bool Down()
     {
         return ZInput.GetKeyDown(entry.Value);
+    }
+
+    /// <summary>
+    /// For modifier keys, either side counts: Left Alt or Right Alt.
+    /// </summary>
+    public bool Held()
+    {
+        KeyCode key = entry.Value;
+        return ZInput.GetKey(key) || (OtherSide(key) is KeyCode other && ZInput.GetKey(other));
+    }
+
+    private static KeyCode? OtherSide(KeyCode key)
+    {
+        return key switch
+        {
+            KeyCode.LeftShift => KeyCode.RightShift,
+            KeyCode.RightShift => KeyCode.LeftShift,
+            KeyCode.LeftControl => KeyCode.RightControl,
+            KeyCode.RightControl => KeyCode.LeftControl,
+            KeyCode.LeftAlt => KeyCode.RightAlt,
+            KeyCode.RightAlt => KeyCode.LeftAlt,
+            _ => null,
+        };
     }
 }

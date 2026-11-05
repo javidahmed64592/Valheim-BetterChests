@@ -6,15 +6,11 @@ namespace BetterChests;
 
 /// <summary>
 /// The opposite of "Take all": moves everything from the player's inventory into the open chest, except
-/// the hotbar (the inventory's top row) and anything equipped.
+/// the hotbar (the inventory's top row), anything equipped, and items marked to be kept (see
+/// <see cref="KeepItems"/>).
 /// </summary>
 internal static class DepositAll
 {
-    /// <summary>
-    /// The row of the player's inventory that the hotbar shows.
-    /// </summary>
-    private const int HotbarRow = 0;
-
     internal static void DepositIntoOpenContainer()
     {
         InventoryGui gui = InventoryGui.instance;
@@ -33,7 +29,7 @@ internal static class DepositAll
         bool moved = false;
         foreach (ItemDrop.ItemData item in new List<ItemDrop.ItemData>(from.GetAllItems()))
         {
-            if (item.m_gridPos.y == HotbarRow || item.m_equipped || item.m_shared.m_questItem)
+            if (KeepItems.AlwaysKept(item) || KeepItems.IsMarked(item) || item.m_shared.m_questItem)
             {
                 continue;
             }
