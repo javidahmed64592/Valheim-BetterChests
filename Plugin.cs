@@ -85,7 +85,7 @@ public class BetterChestsPlugin : BaseUnityPlugin
 
 /// <summary>
 /// A rebindable key. It is read straight from the keyboard, the way the inventory screen reads Escape:
-/// while a menu like the inventory is open, the game ignores registered buttons such as this mod's.
+/// the registered button did not respond while the inventory was open.
 /// </summary>
 internal sealed class Keybind(ConfigEntry<KeyCode> entry)
 {
