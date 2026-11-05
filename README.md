@@ -9,14 +9,14 @@ Enhances chests with additional features like sorting and auto-depositing!
 ![Chest Interface](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/game_screenshot_1.png)
 ![Split Stack Window](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/game_screenshot_2.png)
 
-| Key             | Action                                                                                          |
-| --------------- | ----------------------------------------------------------------------------------------------- |
-| `R`             | Take all: move everything in the open chest into your inventory.                                |
-| `T`             | Place stacks: move items onto matching stacks in the open chest.                                |
-| `F`             | Deposit all: move everything except your hotbar, equipped and marked items into the open chest. |
-| `G`             | Sort the open chest.                                                                            |
-| `Alt` + Mouse 1 | Mark or unmark an item in your inventory to keep it when depositing all.                        |
-| Mouse wheel     | Change the amount by one when splitting a stack (Shift+click).                                  |
+| Key                 | Action                                                                                          |
+| ------------------- | ----------------------------------------------------------------------------------------------- |
+| `R`                 | Take all: move everything in the open chest into your inventory.                                |
+| `T`                 | Place stacks: move items onto matching stacks in the open chest.                                |
+| `F`                 | Deposit all: move everything except your hotbar, equipped and marked items into the open chest. |
+| `G`                 | Sort the open chest.                                                                            |
+| `Alt` + Right-click | Mark or unmark an item in your inventory to keep it when depositing all.                        |
+| Mouse wheel         | Change the amount by one when splitting a stack (Shift+click).                                  |
 
 The keys match the layout of the chest panel's buttons.
 The keys are listed in the inventory's key hints.
@@ -33,7 +33,7 @@ Only chests you could open yourself are used: not private chests of other player
 
 The open chest gets a **Deposit all** button under **Take all**.
 It moves everything in your inventory into the chest, except your hotbar (the top row of your inventory) and anything you have equipped, so you can empty your bags after an adventure without losing your gear.
-To keep other items too, such as your food, hold **Alt** and right-click (Mouse 1) them in your inventory.
+To keep other items too, such as your food, hold **Alt** and right-click them in your inventory.
 
 ## Sort
 
