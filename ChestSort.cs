@@ -7,41 +7,11 @@ namespace BetterChests;
 
 /// <summary>
 /// Sorting the open chest (from the "Sort" button or key, see <see cref="ChestButtons"/>). Partial
-/// stacks are merged, then items are grouped by type (materials, food, ammo, weapons, armour and so on),
-/// with the item the chest holds most of first in each group.
+/// stacks are merged, then items are grouped (wood, stone, ores, metals, seeds, crops, food, gear and so
+/// on, see <see cref="ItemCategories"/>), in game progression order within each group.
 /// </summary>
 internal static class ChestSort
 {
-    /// <summary>
-    /// Sort order of the item types; types not listed go last.
-    /// </summary>
-    private static readonly ItemDrop.ItemData.ItemType[] TypeOrder =
-    [
-        ItemDrop.ItemData.ItemType.Material,
-        ItemDrop.ItemData.ItemType.Consumable,
-        ItemDrop.ItemData.ItemType.Fish,
-        ItemDrop.ItemData.ItemType.Ammo,
-        ItemDrop.ItemData.ItemType.AmmoNonEquipable,
-        ItemDrop.ItemData.ItemType.OneHandedWeapon,
-        ItemDrop.ItemData.ItemType.TwoHandedWeapon,
-        ItemDrop.ItemData.ItemType.TwoHandedWeaponLeft,
-        ItemDrop.ItemData.ItemType.Bow,
-        ItemDrop.ItemData.ItemType.Attach_Atgeir,
-        ItemDrop.ItemData.ItemType.Shield,
-        ItemDrop.ItemData.ItemType.Torch,
-        ItemDrop.ItemData.ItemType.Tool,
-        ItemDrop.ItemData.ItemType.Helmet,
-        ItemDrop.ItemData.ItemType.Chest,
-        ItemDrop.ItemData.ItemType.Legs,
-        ItemDrop.ItemData.ItemType.Shoulder,
-        ItemDrop.ItemData.ItemType.Hands,
-        ItemDrop.ItemData.ItemType.Utility,
-        ItemDrop.ItemData.ItemType.Trinket,
-        ItemDrop.ItemData.ItemType.Trophy,
-        ItemDrop.ItemData.ItemType.Customization,
-        ItemDrop.ItemData.ItemType.Misc,
-    ];
-
     /// <summary>
     /// Sorts the chest open in the inventory screen, if any.
     /// </summary>
@@ -65,19 +35,15 @@ internal static class ChestSort
         List<ItemDrop.ItemData> items = inventory.GetAllItems();
         MergeStacks(items);
 
-        Dictionary<string, int> totals = [];
-        foreach (ItemDrop.ItemData item in items)
-        {
-            _ = totals.TryGetValue(item.m_shared.m_name, out int total);
-            totals[item.m_shared.m_name] = total + item.m_stack;
-        }
-
         List<ItemDrop.ItemData> sorted = [.. items
-            .OrderBy(TypeRank)
-            .ThenByDescending(i => totals[i.m_shared.m_name])
-            .ThenBy(i => Localization.instance.Localize(i.m_shared.m_name), System.StringComparer.CurrentCultureIgnoreCase)
-            .ThenByDescending(i => i.m_quality)
-            .ThenByDescending(i => i.m_stack)];
+            .Select(i => (Item: i, Key: ItemCategories.SortKey(i)))
+            .OrderBy(e => e.Key.Group)
+            .ThenBy(e => e.Key.Index)
+            .ThenBy(e => Localization.instance.Localize(e.Item.m_shared.m_name), System.StringComparer.CurrentCultureIgnoreCase)
+            .ThenBy(e => e.Item.m_shared.m_name, System.StringComparer.Ordinal)
+            .ThenByDescending(e => e.Item.m_quality)
+            .ThenByDescending(e => e.Item.m_stack)
+            .Select(e => e.Item)];
 
         int width = inventory.GetWidth();
         for (int i = 0; i < sorted.Count; i++)
@@ -118,11 +84,5 @@ internal static class ChestSort
         }
 
         _ = items.RemoveAll(i => i.m_stack <= 0);
-    }
-
-    private static int TypeRank(ItemDrop.ItemData item)
-    {
-        int rank = System.Array.IndexOf(TypeOrder, item.m_shared.m_itemType);
-        return rank < 0 ? TypeOrder.Length : rank;
     }
 }

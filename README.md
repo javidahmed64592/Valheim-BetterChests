@@ -37,7 +37,9 @@ It moves everything in your inventory into the chest, except your hotbar (the to
 
 The open chest gets a **Sort** button under **Place stacks**.
 The chest panel is made taller to fit the new buttons, and to show every row of big chests without scrolling, as far as the screen allows.
-Sorting merges partial stacks, then groups items by type (materials, food, fish, ammo, weapons, armour, utility items, trophies and so on).
+Sorting merges partial stacks, then groups related items together, in this order: wood, stone and minerals, ores, metals, creature parts, valuables, seeds, crops, raw meat and fish, food, meads, then ammo, weapons, shields, tools, armour, utility items and trophies.
+Within each group, items follow the game's progression, so copper comes before tin, bronze and iron.
+Items from other mods are placed by their name and type.
 
 ## Split Stack
 
