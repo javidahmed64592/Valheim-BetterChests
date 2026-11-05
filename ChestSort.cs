@@ -11,7 +11,7 @@ using UnityEngine.UI;
 namespace BetterChests;
 
 /// <summary>
-/// Sorting the open chest, from a "Sort" button next to the chest panel or the sort key. Partial
+/// Sorting the open chest, from a "Sort" button under "Place stacks" or the sort key. Partial
 /// stacks are merged, then items are grouped by type (materials, food, ammo, weapons, armour and so on),
 /// with the item the chest holds most of first in each group.
 /// </summary>
@@ -21,10 +21,9 @@ internal static class ChestSort
     private const string ButtonLabel = "Sort";
 
     /// <summary>
-    /// The button sits outside the chest panel's top right corner, in the column the weight display uses.
+    /// Space between "Place stacks" and the sort button under it.
     /// </summary>
-    private static readonly Vector2 ButtonSize = new(80f, 40f);
-    private const float ButtonOffsetX = 34f;
+    private const float ButtonGap = 4f;
 
     /// <summary>
     /// Sort order of the item types; types not listed go last.
@@ -141,15 +140,15 @@ internal static class ChestSort
     }
 
     /// <summary>
-    /// A copy of the "Place stacks" button, so it matches the vanilla style.
+    /// A copy of the "Place stacks" button, so it matches the vanilla style, placed under it.
     /// </summary>
-    private static void CreateButton(InventoryGui gui)
+    private static RectTransform CreateButton(InventoryGui gui)
     {
         Button template = gui.m_stackAllButton;
         if (template == null || template.transform.parent == null)
         {
             BetterChestsPlugin._log.LogWarning("Vanilla chest panel layout not as expected, not adding the sort button.");
-            return;
+            return null;
         }
 
         GameObject go = Object.Instantiate(template.gameObject, template.transform.parent, false);
@@ -167,16 +166,8 @@ internal static class ChestSort
         }
 
         RectTransform rect = (RectTransform)go.transform;
-        rect.anchorMin = rect.anchorMax = new Vector2(1f, 1f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.sizeDelta = ButtonSize;
-
-        // Top aligned with "Place stacks", centred on the weight display below it.
         RectTransform templateRect = (RectTransform)template.transform;
-        RectTransform parentRect = (RectTransform)templateRect.parent;
-        float templateTop = templateRect.localPosition.y + ((1f - templateRect.pivot.y) * templateRect.rect.height);
-        float parentTop = parentRect.rect.yMax;
-        rect.anchoredPosition = new Vector2(ButtonOffsetX, templateTop - parentTop - (ButtonSize.y / 2f));
+        rect.anchoredPosition = templateRect.anchoredPosition - new Vector2(0f, templateRect.rect.height + ButtonGap);
 
         TMP_Text label = go.GetComponentInChildren<TMP_Text>(true);
         if (label != null)
@@ -189,6 +180,7 @@ internal static class ChestSort
         Button button = go.GetComponent<Button>();
         button.onClick = new Button.ButtonClickedEvent();
         button.onClick.AddListener(SortOpenContainer);
+        return rect;
     }
 
     [HarmonyPatch(typeof(InventoryGui), "Awake")]
@@ -197,7 +189,11 @@ internal static class ChestSort
         [HarmonyPostfix]
         private static void Postfix(InventoryGui __instance)
         {
-            CreateButton(__instance);
+            RectTransform button = CreateButton(__instance);
+            if (button != null)
+            {
+                ChestPanelLayout.Setup(__instance, button);
+            }
         }
     }
 

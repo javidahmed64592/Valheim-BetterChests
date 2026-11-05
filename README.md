@@ -6,7 +6,8 @@
 
 Enhances chests with additional features like sorting and auto-depositing!
 
-![BetterChests Example](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/game_screenshot_1.png)
+![Chest Interface](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/game_screenshot_1.png)
+![Split Stack Window](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/game_screenshot_2.png)
 
 | Key | Action                                                                         |
 | --- | ------------------------------------------------------------------------------ |
@@ -28,7 +29,8 @@ Only chests you could open yourself are used: not private chests of other player
 
 ## Sort
 
-The open chest gets a **Sort** button beside it.
+The open chest gets a **Sort** button under **Place stacks**.
+The chest panel is made taller to fit it, and to show every row of big chests without scrolling, as far as the screen allows.
 Sorting merges partial stacks, then groups items by type (materials, food, fish, ammo, weapons, armour, utility items, trophies and so on).
 
 ## Split Stack
