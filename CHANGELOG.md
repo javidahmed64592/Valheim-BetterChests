@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+
+- Lowered the default auto deposit radius from 10m to 6m, and the maximum from 50m to 12m.
+
 ## 0.2.0
 
 - Items in your inventory can be marked to stay behind when using Deposit all: hold Alt and right-click (Mouse 1) them. Marked items get a gold frame.
