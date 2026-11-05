@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.0
+
+- Items in your inventory can be marked to stay behind when using Deposit all: hold Alt and right-click (Mouse 1) them. Marked items get a gold frame.
+- The keep key can be changed in the config file or in game from Settings > Mod Settings.
+
 ## 0.1.1
 
 - Declared the mod as client side to Jotunn, so servers and other players are never required to have it installed.
