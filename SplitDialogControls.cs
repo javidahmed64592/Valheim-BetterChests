@@ -8,20 +8,13 @@ using UnityEngine.UI;
 namespace BetterChests;
 
 /// <summary>
-/// Adds "-" and "+" buttons either side of the split stack slider, and keys that do the same (held
-/// down, they repeat).
+/// Adds "-" and "+" buttons either side of the split stack slider, and lets the mouse wheel do the same.
 /// </summary>
 internal static class SplitDialogControls
 {
     private const float ButtonSize = 36f;
     private const float ButtonGap = 8f;
     private const float LabelFontSize = 26f;
-
-    private const float RepeatDelay = 0.4f;
-    private const float RepeatInterval = 0.05f;
-
-    private static int _heldStep;
-    private static float _nextRepeat;
 
     private static void Step(SplitDialog dialog, int delta)
     {
@@ -33,42 +26,20 @@ internal static class SplitDialogControls
         }
     }
 
-    private static void HandleKeys(SplitDialog dialog)
+    /// <summary>
+    /// Scrolling up takes one more item, scrolling down one fewer.
+    /// </summary>
+    private static void HandleScroll(SplitDialog dialog)
     {
-        if (BetterChestsPlugin.TextInputActive())
+        float scroll = ZInput.GetMouseScrollWheel();
+        if (scroll > 0f)
         {
-            return;
+            Step(dialog, 1);
         }
-
-        float now = Time.unscaledTime;
-        if (BetterChestsPlugin._splitDecreaseKey.Down())
+        else if (scroll < 0f)
         {
-            StartHold(dialog, -1, now);
+            Step(dialog, -1);
         }
-        else if (BetterChestsPlugin._splitIncreaseKey.Down())
-        {
-            StartHold(dialog, 1, now);
-        }
-        else if (_heldStep != 0)
-        {
-            Keybind key = _heldStep < 0 ? BetterChestsPlugin._splitDecreaseKey : BetterChestsPlugin._splitIncreaseKey;
-            if (!key.Held())
-            {
-                _heldStep = 0;
-            }
-            else if (now >= _nextRepeat)
-            {
-                Step(dialog, _heldStep);
-                _nextRepeat = now + RepeatInterval;
-            }
-        }
-    }
-
-    private static void StartHold(SplitDialog dialog, int step, float now)
-    {
-        Step(dialog, step);
-        _heldStep = step;
-        _nextRepeat = now + RepeatDelay;
     }
 
     /// <summary>
@@ -162,11 +133,7 @@ internal static class SplitDialogControls
         {
             if (__instance.m_splitDialog.m_splitSlider.gameObject.activeInHierarchy)
             {
-                HandleKeys(__instance.m_splitDialog);
-            }
-            else
-            {
-                _heldStep = 0;
+                HandleScroll(__instance.m_splitDialog);
             }
         }
     }

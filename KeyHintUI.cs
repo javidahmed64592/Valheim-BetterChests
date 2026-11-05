@@ -12,13 +12,12 @@ namespace BetterChests;
 
 /// <summary>
 /// Adds this mod's keys to the vanilla inventory key hints (bottom of the screen while the inventory is
-/// open). Each hint is a copy of the vanilla "Use" hint of the same row, with a "/" and a second key box
-/// added for the split stack keys. They follow the configured keys.
+/// open). Each hint is a copy of the vanilla "Use" hint of the same row, and they follow the configured
+/// keys. The split amount hint is a copy of the build mode "Rotate" hint, which shows the mouse wheel.
 /// </summary>
 internal static class KeyHintUI
 {
     private const string ItemPrefix = "BetterChests_Hint_";
-    private const string Separator = "/";
 
     private static readonly Regex WordBreak = new("(?<=[a-z0-9])(?=[A-Z])");
 
@@ -28,23 +27,23 @@ internal static class KeyHintUI
     {
         public string Label;
         /// <summary>
-        /// read when needed: the keybinds are created in the plugin's Awake
+        /// Read when needed: the keybinds are created in the plugin's Awake. Null for the scroll hint.
         /// </summary>
-        public System.Func<Keybind>[] Keys;
+        public System.Func<Keybind> Key;
         public HintVisibility Visibility;
+        /// <summary>
+        /// Shown with the mouse wheel icon instead of keys.
+        /// </summary>
+        public bool Scroll;
     }
 
     private static readonly HintDef[] Hints =
     [
-        new HintDef { Label = "Take all", Keys = [() => BetterChestsPlugin._takeAllKey], Visibility = HintVisibility.ContainerOnly },
-        new HintDef { Label = "Place stacks", Keys = [() => BetterChestsPlugin._placeStacksKey], Visibility = HintVisibility.ContainerOnly },
-        new HintDef { Label = "Sort", Keys = [() => BetterChestsPlugin._sortKey], Visibility = HintVisibility.ContainerOnly },
-        new HintDef
-        {
-            Label = "Split amount",
-            Keys = [() => BetterChestsPlugin._splitDecreaseKey, () => BetterChestsPlugin._splitIncreaseKey],
-            Visibility = HintVisibility.SplitDialogOnly
-        },
+        new HintDef { Label = "Take all", Key = () => BetterChestsPlugin._takeAllKey, Visibility = HintVisibility.ContainerOnly },
+        new HintDef { Label = "Place stacks", Key = () => BetterChestsPlugin._placeStacksKey, Visibility = HintVisibility.ContainerOnly },
+        new HintDef { Label = "Deposit all", Key = () => BetterChestsPlugin._depositAllKey, Visibility = HintVisibility.ContainerOnly },
+        new HintDef { Label = "Sort", Key = () => BetterChestsPlugin._sortKey, Visibility = HintVisibility.ContainerOnly },
+        new HintDef { Label = "Split amount", Scroll = true, Visibility = HintVisibility.SplitDialogOnly },
     ];
 
     /// <summary>
@@ -54,7 +53,10 @@ internal static class KeyHintUI
     {
         public RectTransform Keyboard;
         public GameObject[] Items;
-        public TMP_Text[][] KeyTexts;
+        /// <summary>
+        /// Null for hints without a key.
+        /// </summary>
+        public TMP_Text[] KeyTexts;
         public bool Failed;
     }
 
@@ -71,11 +73,11 @@ internal static class KeyHintUI
         bool containerOpen = gui.IsContainerOpen();
         bool splitting = gui.m_splitDialog != null && gui.m_splitDialog.IsActive;
 
-        UpdateRow(keyHints.m_inventoryHints, false, splitting);
-        UpdateRow(keyHints.m_inventoryWithContainerHints, containerOpen, splitting);
+        UpdateRow(keyHints, keyHints.m_inventoryHints, false, splitting);
+        UpdateRow(keyHints, keyHints.m_inventoryWithContainerHints, containerOpen, splitting);
     }
 
-    private static void UpdateRow(GameObject root, bool containerOpen, bool splitting)
+    private static void UpdateRow(KeyHints keyHints, GameObject root, bool containerOpen, bool splitting)
     {
         if (root == null || !root.activeInHierarchy)
         {
@@ -84,7 +86,7 @@ internal static class KeyHintUI
 
         if (!Rows.TryGetValue(root, out Row row))
         {
-            row = Create(root);
+            row = Create(keyHints, root);
             Rows[root] = row;
         }
 
@@ -114,10 +116,10 @@ internal static class KeyHintUI
             }
 
             // The keys are configurable, so keep the key boxes up to date.
-            for (int k = 0; k < hint.Keys.Length; k++)
+            TMP_Text text = row.KeyTexts[i];
+            if (hint.Key != null && text != null)
             {
-                string keyName = KeyName(hint.Keys[k]().Key);
-                TMP_Text text = row.KeyTexts[i][k];
+                string keyName = KeyName(hint.Key().Key);
                 if (text.text != keyName)
                 {
                     text.text = keyName;
@@ -132,7 +134,7 @@ internal static class KeyHintUI
         }
     }
 
-    private static Row Create(GameObject root)
+    private static Row Create(KeyHints keyHints, GameObject root)
     {
         Row row = new();
 
@@ -145,61 +147,78 @@ internal static class KeyHintUI
             return row;
         }
 
-        Transform separatorTemplate = FindSeparator(keyboard);
-
         row.Keyboard = (RectTransform)keyboard;
         row.Items = new GameObject[Hints.Length];
-        row.KeyTexts = new TMP_Text[Hints.Length][];
+        row.KeyTexts = new TMP_Text[Hints.Length];
+
+        Transform scrollTemplate = FindScrollTemplate(keyHints);
 
         for (int i = 0; i < Hints.Length; i++)
         {
             HintDef hint = Hints[i];
-            GameObject item = Object.Instantiate(template.gameObject, keyboard, false);
-            item.name = ItemPrefix + hint.Label;
-            item.SetActive(false);
-
-            Transform label = item.transform.Find("Text");
-            // Vanilla labels can have a fixed width sized for their own text.
-            LayoutElement fixedSize = label.GetComponent<LayoutElement>();
-            if (fixedSize != null)
+            if (hint.Scroll)
             {
-                Object.DestroyImmediate(fixedSize);
+                row.Items[i] = CreateScrollHint(hint, template, scrollTemplate, keyboard);
             }
-
-            label.GetComponent<TMP_Text>().text = hint.Label;
-
-            Transform key = item.transform.Find("key_bkg");
-            row.KeyTexts[i] = new TMP_Text[hint.Keys.Length];
-            row.KeyTexts[i][0] = key.GetComponentInChildren<TMP_Text>(true);
-
-            // Further keys go after the first, each preceded by a "/".
-            Transform previous = key;
-            for (int k = 1; k < hint.Keys.Length; k++)
+            else
             {
-                // Unity objects need an explicit null check rather than ??.
-                Transform separatorSource = label;
-                if (separatorTemplate != null)
-                {
-                    separatorSource = separatorTemplate;
-                }
-
-                GameObject separator = Object.Instantiate(separatorSource.gameObject, item.transform, false);
-                separator.name = "separator";
-                separator.SetActive(true);
-                separator.GetComponent<TMP_Text>().text = Separator;
-                separator.transform.SetSiblingIndex(previous.GetSiblingIndex() + 1);
-
-                GameObject extraKey = Object.Instantiate(key.gameObject, item.transform, false);
-                extraKey.name = "key_bkg (" + k + ")";
-                extraKey.transform.SetSiblingIndex(separator.transform.GetSiblingIndex() + 1);
-                row.KeyTexts[i][k] = extraKey.GetComponentInChildren<TMP_Text>(true);
-                previous = extraKey.transform;
+                row.Items[i] = CreateItem(hint, template, keyboard);
+                row.KeyTexts[i] = row.Items[i].transform.Find("key_bkg").GetComponentInChildren<TMP_Text>(true);
             }
-
-            row.Items[i] = item;
         }
 
         return row;
+    }
+
+    private static GameObject CreateItem(HintDef hint, Transform template, Transform keyboard)
+    {
+        GameObject item = Object.Instantiate(template.gameObject, keyboard, false);
+        item.name = ItemPrefix + hint.Label;
+        item.SetActive(false);
+
+        Transform label = item.transform.Find("Text");
+        // Vanilla labels can have a fixed width sized for their own text.
+        LayoutElement fixedSize = label.GetComponent<LayoutElement>();
+        if (fixedSize != null)
+        {
+            Object.DestroyImmediate(fixedSize);
+        }
+
+        label.GetComponent<TMP_Text>().text = hint.Label;
+        return item;
+    }
+
+    /// <summary>
+    /// A copy of the build mode "Rotate" hint (a label and a mouse wheel icon), or failing that a key hint
+    /// reading "Mouse wheel".
+    /// </summary>
+    private static GameObject CreateScrollHint(HintDef hint, Transform keyTemplate, Transform scrollTemplate, Transform keyboard)
+    {
+        if (scrollTemplate != null)
+        {
+            return CreateItem(hint, scrollTemplate, keyboard);
+        }
+
+        GameObject item = CreateItem(hint, keyTemplate, keyboard);
+        item.transform.Find("key_bkg").GetComponentInChildren<TMP_Text>(true).text = "Mouse wheel";
+        return item;
+    }
+
+    private static Transform FindScrollTemplate(KeyHints keyHints)
+    {
+        if (keyHints.m_buildHints == null)
+        {
+            return null;
+        }
+
+        Transform rotate = keyHints.m_buildHints.transform.Find("Keyboard/rotate");
+        if (rotate == null || rotate.Find("mousew_icon") == null)
+        {
+            return null;
+        }
+
+        Transform label = rotate.Find("Text");
+        return label != null && label.GetComponent<TMP_Text>() != null ? rotate : null;
     }
 
     /// <summary>
@@ -235,23 +254,6 @@ internal static class KeyHintUI
         Transform key = item.Find("key_bkg");
         return label != null && label.GetComponent<TMP_Text>() != null
             && key != null && key.GetComponentInChildren<TMP_Text>(true) != null;
-    }
-
-    /// <summary>
-    /// The "+" between the keys of a vanilla multi-key hint, styled for sitting between key boxes.
-    /// </summary>
-    private static Transform FindSeparator(Transform keyboard)
-    {
-        foreach (Transform child in keyboard)
-        {
-            Transform plus = child.Find("plus");
-            if (plus != null && plus.GetComponent<TMP_Text>() != null)
-            {
-                return plus;
-            }
-        }
-
-        return null;
     }
 
     /// <summary>

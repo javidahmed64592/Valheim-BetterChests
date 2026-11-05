@@ -23,9 +23,8 @@ public class BetterChestsPlugin : BaseUnityPlugin
 
     internal static Keybind _takeAllKey;
     internal static Keybind _placeStacksKey;
+    internal static Keybind _depositAllKey;
     internal static Keybind _sortKey;
-    internal static Keybind _splitDecreaseKey;
-    internal static Keybind _splitIncreaseKey;
 
     private Harmony _harmony;
 
@@ -33,18 +32,18 @@ public class BetterChestsPlugin : BaseUnityPlugin
     {
         _log = Logger;
 
-        _takeAllKey = BindKey("Take All", "TakeAll", KeyCode.H,
+        // Laid out like the chest panel's buttons: R and T for the top row, F and G for the row below.
+        _takeAllKey = BindKey("Take All", "TakeAll", KeyCode.R,
             "While a chest is open, moves everything in it into your inventory " +
             "(the same as the \"Take all\" button).");
-        _placeStacksKey = BindKey("Place Stacks", "PlaceStacks", KeyCode.F,
+        _placeStacksKey = BindKey("Place Stacks", "PlaceStacks", KeyCode.T,
             "While a chest is open, moves items from your inventory onto matching stacks in the chest " +
             "(the same as the \"Place stacks\" button).");
+        _depositAllKey = BindKey("Deposit All", "DepositAll", KeyCode.F,
+            "While a chest is open, moves everything in your inventory into it, except your hotbar and " +
+            "equipped items (the same as the \"Deposit all\" button).");
         _sortKey = BindKey("Sort", "Sort", KeyCode.G,
             "While a chest is open, sorts its contents (the same as the \"Sort\" button).");
-        _splitDecreaseKey = BindKey("Split Stack Decrease", "SplitDecrease", KeyCode.R,
-            "While splitting a stack, takes one fewer item. Hold to keep decreasing.");
-        _splitIncreaseKey = BindKey("Split Stack Increase", "SplitIncrease", KeyCode.T,
-            "While splitting a stack, takes one more item. Hold to keep increasing.");
 
         AutoDeposit.BindConfig(Config);
 
@@ -94,10 +93,5 @@ internal sealed class Keybind(ConfigEntry<KeyCode> entry)
     public bool Down()
     {
         return ZInput.GetKeyDown(entry.Value);
-    }
-
-    public bool Held()
-    {
-        return ZInput.GetKey(entry.Value);
     }
 }

@@ -1,30 +1,17 @@
 using System.Collections.Generic;
 using System.Linq;
 
-using HarmonyLib;
-
-using TMPro;
-
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace BetterChests;
 
 /// <summary>
-/// Sorting the open chest, from a "Sort" button under "Place stacks" or the sort key. Partial
+/// Sorting the open chest (from the "Sort" button or key, see <see cref="ChestButtons"/>). Partial
 /// stacks are merged, then items are grouped by type (materials, food, ammo, weapons, armour and so on),
 /// with the item the chest holds most of first in each group.
 /// </summary>
 internal static class ChestSort
 {
-    private const string ButtonName = "BetterChests_Sort";
-    private const string ButtonLabel = "Sort";
-
-    /// <summary>
-    /// Space between "Place stacks" and the sort button under it.
-    /// </summary>
-    private const float ButtonGap = 4f;
-
     /// <summary>
     /// Sort order of the item types; types not listed go last.
     /// </summary>
@@ -137,95 +124,5 @@ internal static class ChestSort
     {
         int rank = System.Array.IndexOf(TypeOrder, item.m_shared.m_itemType);
         return rank < 0 ? TypeOrder.Length : rank;
-    }
-
-    /// <summary>
-    /// A copy of the "Place stacks" button, so it matches the vanilla style, placed under it.
-    /// </summary>
-    private static RectTransform CreateButton(InventoryGui gui)
-    {
-        Button template = gui.m_stackAllButton;
-        if (template == null || template.transform.parent == null)
-        {
-            BetterChestsPlugin._log.LogWarning("Vanilla chest panel layout not as expected, not adding the sort button.");
-            return null;
-        }
-
-        GameObject go = Object.Instantiate(template.gameObject, template.transform.parent, false);
-        go.name = ButtonName;
-
-        // The copy would otherwise also react to the gamepad button for "Place stacks".
-        foreach (UIGamePad gamePad in go.GetComponentsInChildren<UIGamePad>(true))
-        {
-            if (gamePad.m_hint != null)
-            {
-                Object.DestroyImmediate(gamePad.m_hint);
-            }
-
-            Object.DestroyImmediate(gamePad);
-        }
-
-        RectTransform rect = (RectTransform)go.transform;
-        RectTransform templateRect = (RectTransform)template.transform;
-        rect.anchoredPosition = templateRect.anchoredPosition - new Vector2(0f, templateRect.rect.height + ButtonGap);
-
-        TMP_Text label = go.GetComponentInChildren<TMP_Text>(true);
-        if (label != null)
-        {
-            // Match the vanilla button's capitalisation.
-            bool upper = !string.IsNullOrEmpty(label.text) && !label.text.Any(char.IsLower);
-            label.text = upper ? ButtonLabel.ToUpperInvariant() : ButtonLabel;
-        }
-
-        Button button = go.GetComponent<Button>();
-        button.onClick = new Button.ButtonClickedEvent();
-        button.onClick.AddListener(SortOpenContainer);
-        return rect;
-    }
-
-    [HarmonyPatch(typeof(InventoryGui), "Awake")]
-    private static class InventoryGui_Awake_Patch
-    {
-        [HarmonyPostfix]
-        private static void Postfix(InventoryGui __instance)
-        {
-            RectTransform button = CreateButton(__instance);
-            if (button != null)
-            {
-                ChestPanelLayout.Setup(__instance, button);
-            }
-        }
-    }
-
-    /// <summary>
-    /// The take all, place stacks and sort keys work while a chest is open (and the split dialog isn't).
-    /// </summary>
-    [HarmonyPatch(typeof(InventoryGui), "Update")]
-    private static class InventoryGui_Update_Patch
-    {
-        [HarmonyPostfix]
-        private static void Postfix(InventoryGui __instance)
-        {
-            if (!InventoryGui.IsVisible()
-                || !__instance.IsContainerOpen()
-                || __instance.m_splitDialog.IsActive
-                || BetterChestsPlugin.TextInputActive())
-            {
-                return;
-            }
-
-            if (BetterChestsPlugin._takeAllKey.Down())
-            {
-                __instance.OnTakeAll();
-            }
-            else if (BetterChestsPlugin._placeStacksKey.Down())
-            {
-                __instance.OnStackAll();
-            }
-            else if (BetterChestsPlugin._sortKey.Down())
-            {
-                SortOpenContainer();
-            }
-        }
     }
 }

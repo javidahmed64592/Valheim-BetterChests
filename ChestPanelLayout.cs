@@ -6,7 +6,7 @@ using UnityEngine.UI;
 namespace BetterChests;
 
 /// <summary>
-/// Makes room in the chest panel for the sort button under "Place stacks", and makes the panel taller so
+/// Makes room in the chest panel for the buttons added under "Take all" and "Place stacks", and makes the panel taller so
 /// that every row of a big chest fits without scrolling. The panel hangs below the player's inventory and
 /// grows downwards; it stops at the bottom of the screen, beyond which the chest scrolls as normal.
 /// </summary>
@@ -32,9 +32,9 @@ internal static class ChestPanelLayout
 
     /// <summary>
     /// Moves the panel's contents so they stay put when the panel grows downwards, and the grid down to
-    /// below <paramref name="sortButton"/>.
+    /// below <paramref name="buttons"/>.
     /// </summary>
-    public static void Setup(InventoryGui gui, RectTransform sortButton)
+    public static void Setup(InventoryGui gui, RectTransform[] buttons)
     {
         _panel = gui.m_container;
         _grid = gui.m_containerGrid;
@@ -52,11 +52,15 @@ internal static class ChestPanelLayout
         // Pin the header buttons and the scroll bar to the top, so the panel can grow under them.
         PinToTop((RectTransform)gui.m_takeAllButton.transform);
         PinToTop((RectTransform)gui.m_stackAllButton.transform);
-        PinToTop(sortButton);
-
         float vanillaGridTop = -gridRect.offsetMax.y;
-        float sortBottom = -(sortButton.anchoredPosition.y - (sortButton.pivot.y * sortButton.rect.height));
-        _gridTop = Mathf.Max(vanillaGridTop, sortBottom + Gap);
+        _gridTop = vanillaGridTop;
+        foreach (RectTransform button in buttons)
+        {
+            PinToTop(button);
+            float bottom = -(button.anchoredPosition.y - (button.pivot.y * button.rect.height));
+            _gridTop = Mathf.Max(_gridTop, bottom + Gap);
+        }
+
         gridRect.offsetMax = new Vector2(gridRect.offsetMax.x, -_gridTop);
 
         Scrollbar scrollbar = _grid.m_scrollbar;
