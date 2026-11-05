@@ -10,29 +10,26 @@ Enhances chests with additional features like sorting and auto-depositing!
 
 | Key | Action                                                                         |
 | --- | ------------------------------------------------------------------------------ |
-| `H` | Take all: move everything in the open chest into your inventory.            |
+| `H` | Take all: move everything in the open chest into your inventory.               |
 | `F` | Place stacks: move items onto matching stacks in the open chest.               |
 | `G` | Sort the open chest.                                                           |
 | `R` | Take one fewer item when splitting a stack (Shift+click). Hold to keep going.  |
 | `T` | Take one more item when splitting a stack (Shift+click). Hold to keep going.   |
 
-The keys are listed in the inventory's key hints. All of them can be changed, see [Configuration](#configuration).
+The keys are listed in the inventory's key hints.
+All of them can be changed, see [Configuration](#configuration).
 
 ## Auto Deposit
 
 Dropping an item near chests stores it in them instead of on the ground.
 Chests that already hold the item are filled first, nearest first, then any other chest with room.
-Anything that doesn't fit is dropped on the ground as normal.
-The item is thrown like a normal drop, then pulled into the chest it went into, and a message says which chest that was.
 
 Only chests you could open yourself are used: not private chests of other players, chests inside someone else's ward, or chests another player has open.
-Carts, tombstones and items dragged out of a chest are left alone.
 
 ## Sort
 
 The open chest gets a **Sort** button beside it.
 Sorting merges partial stacks, then groups items by type (materials, food, fish, ammo, weapons, armour, utility items, trophies and so on).
-Within each group, the item the chest holds most of comes first.
 
 ## Split Stack
 
