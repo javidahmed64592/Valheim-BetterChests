@@ -44,9 +44,6 @@ The number keys, arrow keys and Enter still work as before.
 Settings are in the BepInEx config file `javidahmed64592.betterchests.cfg`.
 You can change the keys, turn auto deposit off, and change how far away chests are used for dropped items (10m by default).
 
-The keys can also be changed in game from **Settings > Mod Settings** (added by Jotunn): open the BetterChests section, click a key and press the new one.
-The key hints update straight away.
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](https://github.com/javidahmed64592/Valheim-BetterChests/blob/main/LICENSE) file for details.
