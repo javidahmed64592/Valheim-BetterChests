@@ -65,7 +65,7 @@ public class BetterChestsPlugin : BaseUnityPlugin
     private Keybind BindKey(string configName, string buttonName, KeyCode defaultKey, string description)
     {
         ConfigEntry<KeyCode> entry = Config.Bind("Keybinds", configName, defaultKey,
-            description + " Also rebindable in game from Settings > Mod Settings.");
+            description);
 
         // Registered so the key shows up as a key binding in Jotunn's Mod Settings menu.
         InputManager.Instance.AddButton(PluginGuid, new ButtonConfig

@@ -3,7 +3,7 @@
 ## 0.2.0
 
 - Items in your inventory can be marked to stay behind when using Deposit all: hold Alt and right-click (Mouse 1) them. Marked items get a gold frame.
-- The keep key can be changed in the config file or in game from Settings > Mod Settings.
+- The keep key can be changed in the config file.
 
 ## 0.1.1
 
@@ -18,4 +18,4 @@
 - The chest panel grows to fit the new buttons and every row of big chests.
 - Added keys laid out like the chest buttons while a chest is open: take all (`R`), place stacks (`T`), deposit all (`F`) and sort (`G`).
 - Added -/+ buttons to the split stack dialog, and the mouse wheel changes the amount too.
-- The keys are shown in the inventory key hints and can be changed in the config file or in game from Settings > Mod Settings.
+- The keys are shown in the inventory key hints and can be changed in the config file.
