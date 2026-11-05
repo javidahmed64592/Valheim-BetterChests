@@ -24,9 +24,9 @@ internal static class AutoDeposit
     {
         _enabled = config.Bind("Auto Deposit", "Enabled", true,
             "Dropping an item near chests stores it in them instead of dropping it on the ground.");
-        _radius = config.Bind("Auto Deposit", "Radius", 10f,
+        _radius = config.Bind("Auto Deposit", "Radius", 6f,
             new ConfigDescription("Distance in metres from the player within which chests are used for dropped items.",
-                new AcceptableValueRange<float>(1f, 50f)));
+                new AcceptableValueRange<float>(1f, 12f)));
     }
 
     /// <summary>

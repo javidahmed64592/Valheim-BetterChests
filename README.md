@@ -51,7 +51,7 @@ The number keys, arrow keys and Enter still work as before.
 ## Configuration
 
 Settings are in the BepInEx config file `javidahmed64592.betterchests.cfg`.
-You can change the keys, turn auto deposit off, and change how far away chests are used for dropped items (10m by default).
+You can change the keys, turn auto deposit off, and change how far away chests are used for dropped items (6m by default, up to 12m).
 
 ## License
 
