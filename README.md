@@ -23,6 +23,7 @@ The keys are listed in the inventory's key hints. All of them can be changed, se
 Dropping an item near chests stores it in them instead of on the ground.
 Chests that already hold the item are filled first, nearest first, then any other chest with room.
 Anything that doesn't fit is dropped on the ground as normal.
+The item is thrown like a normal drop, then pulled into the chest it went into, and a message says which chest that was.
 
 Only chests you could open yourself are used: not private chests of other players, chests inside someone else's ward, or chests another player has open.
 Carts, tombstones and items dragged out of a chest are left alone.

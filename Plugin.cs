@@ -62,14 +62,14 @@ public class BetterChestsPlugin : BaseUnityPlugin
         ConfigEntry<KeyCode> entry = Config.Bind("Keybinds", configName, defaultKey,
             description + " Also rebindable in game from Settings > Mod Settings.");
 
-        string name = "BetterChests_" + buttonName;
+        // Registered so the key shows up as a key binding in Jotunn's Mod Settings menu.
         InputManager.Instance.AddButton(PluginGuid, new ButtonConfig
         {
-            Name = name,
+            Name = "BetterChests_" + buttonName,
             Config = entry
         });
 
-        return new Keybind(entry, name + "!" + PluginGuid);
+        return new Keybind(entry);
     }
 
     /// <summary>
@@ -84,19 +84,20 @@ public class BetterChestsPlugin : BaseUnityPlugin
 }
 
 /// <summary>
-/// A rebindable key: its config entry (for the key hints) and the name to query ZInput with.
+/// A rebindable key. It is read straight from the keyboard, the way the inventory screen reads Escape:
+/// while a menu like the inventory is open, the game ignores registered buttons such as this mod's.
 /// </summary>
-internal sealed class Keybind(ConfigEntry<KeyCode> entry, string queryName)
+internal sealed class Keybind(ConfigEntry<KeyCode> entry)
 {
     public KeyCode Key => entry.Value;
 
     public bool Down()
     {
-        return ZInput.GetButtonDown(queryName);
+        return ZInput.GetKeyDown(entry.Value);
     }
 
     public bool Held()
     {
-        return ZInput.GetButton(queryName);
+        return ZInput.GetKey(entry.Value);
     }
 }

@@ -55,7 +55,23 @@ internal static class AutoDeposit
         // Same as dropping: the item leaves the player's hands first.
         player.RemoveEquipAction(item);
         player.UnequipItem(item, triggerEquipEffects: false);
+        if (player.m_hiddenLeftItem == item || player.m_hiddenRightItem == item)
+        {
+            if (player.m_hiddenLeftItem == item)
+            {
+                player.m_hiddenLeftItem = null;
+            }
 
+            if (player.m_hiddenRightItem == item)
+            {
+                player.m_hiddenRightItem = null;
+            }
+
+            player.SetupVisEquipment(player.m_visEquipment, isRagdoll: false);
+        }
+
+        // The look is copied before the stack shrinks below, as it may be removed entirely.
+        ItemDrop.ItemData look = item.Clone();
         string itemName = item.m_shared.m_name;
         Sprite icon = item.GetIcon();
         int stored = 0;
@@ -92,16 +108,32 @@ internal static class AutoDeposit
             _ = from.RemoveItem(item, added);
             stored += added;
 
-            if (InventoryGui.instance != null)
-            {
-                _ = InventoryGui.instance.m_moveItemEffects.Create(container.transform.position, Quaternion.identity);
-            }
+            // The item is stored already; this only shows where it went.
+            string chestName = container.GetHoverName();
+            DepositEffect.Spawn(player, look, container, () => OnArrive(container, itemName, chestName, added, icon));
+        }
 
-            player.Message(MessageHud.MessageType.TopLeft,
-                "Stored " + itemName + " in " + container.GetHoverName(), added, icon);
+        if (stored > 0)
+        {
+            // Same animation and sound as a vanilla drop.
+            player.m_zanim.SetTrigger("interact");
+            _ = player.m_dropEffects.Create(player.transform.position, Quaternion.identity, null, 1f, -1, player.GetZDOID());
         }
 
         return stored;
+    }
+
+    private static void OnArrive(Container container, string itemName, string chestName, int amount, Sprite icon)
+    {
+        if (container != null && InventoryGui.instance != null)
+        {
+            _ = InventoryGui.instance.m_moveItemEffects.Create(container.transform.position, Quaternion.identity);
+        }
+
+        if (Player.m_localPlayer != null)
+        {
+            Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, "Stored " + itemName + " in " + chestName, amount, icon);
+        }
     }
 
     /// <summary>
