@@ -24,8 +24,15 @@ All of them can be changed, see [Configuration](#configuration).
 
 ## Auto Deposit
 
-Dropping an item near chests stores it in them instead of on the ground.
-Chests that already hold the item are filled first, nearest first, then any other chest with room.
+Dropping an item near chests stores it in them.
+The item lands on the ground as normal and lies there for a few seconds, so other players can still pick it up.
+Then, if it landed within 4m of a chest you threw it towards, it is pulled into that chest.
+Chests you had your back to are left alone, so you can still drop items on the ground next to a chest.
+
+Chests standing close together count as one group, such as a row or a stack of chests.
+An item that lands near any of them can go into any chest in the group, even one at the far end.
+Chests in the group that already hold the item are filled first, nearest first, then any other chest with room.
+Whatever doesn't fit stays on the ground.
 
 Only chests you could open yourself are used: not private chests of other players, chests inside someone else's ward, or chests another player has open.
 
@@ -51,7 +58,13 @@ The number keys, arrow keys and Enter still work as before.
 ## Configuration
 
 Settings are in the BepInEx config file `javidahmed64592.betterchests.cfg`.
-You can change the keys, turn auto deposit off, and change how far away chests are used for dropped items (6m by default, up to 12m).
+You can change the keys and turn auto deposit off.
+For auto deposit you can also change:
+
+- **Radius**: how close a dropped item must land to a chest (4m by default, up to 12m).
+- **Cluster Gap**: how far apart chests can be and still count as one group (1m by default, edge to edge).
+- **Throw Angle**: how far to either side of the way you face a chest can be (60 degrees by default; 180 uses chests in every direction).
+- **Delay**: how long a dropped item lies on the ground before it is stored (3 seconds by default).
 
 ## License
 

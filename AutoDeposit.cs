@@ -9,73 +9,91 @@ using UnityEngine;
 namespace BetterChests;
 
 /// <summary>
-/// Dropping an item near chests stores it in them instead of on the ground. Chests that already hold
-/// the item come first, nearest first, then any other chest with room. Whatever doesn't fit is dropped
-/// on the ground as normal.
+/// Items the player drops near chests are stored in them. The item is dropped as normal first and lies on
+/// the ground for a few seconds, so anyone can still pick it up. Then, if it landed near a chest the player
+/// threw it towards, it is stored in that chest or the chests grouped with it. Chests that already hold the
+/// item come first, nearest first, then any other chest with room. Whatever doesn't fit stays on the ground.
 /// </summary>
 internal static class AutoDeposit
 {
+    /// <summary>
+    /// How long past the delay to wait for a still moving item to come to rest before storing it anyway.
+    /// </summary>
+    private const float MaxSettleTime = 3f;
+    private const float SettledSpeedSqr = 0.25f;
+
+    /// <summary>
+    /// The size assumed for a chest without a collider.
+    /// </summary>
+    private static readonly Vector3 FallbackChestSize = Vector3.one;
+
     private static ConfigEntry<bool> _enabled;
     private static ConfigEntry<float> _radius;
+    private static ConfigEntry<float> _clusterGap;
+    private static ConfigEntry<float> _throwAngle;
+    private static ConfigEntry<float> _delay;
 
     private static readonly List<Container> Containers = [];
+
+    /// <summary>
+    /// Set while the local player drops an item from their own inventory, so the dropped item can be watched.
+    /// </summary>
+    private static Player _dropper;
 
     public static void BindConfig(ConfigFile config)
     {
         _enabled = config.Bind("Auto Deposit", "Enabled", true,
-            "Dropping an item near chests stores it in them instead of dropping it on the ground.");
-        _radius = config.Bind("Auto Deposit", "Radius", 6f,
-            new ConfigDescription("Distance in metres from the player within which chests are used for dropped items.",
+            "Dropping an item near chests stores it in them instead of leaving it on the ground.");
+        _radius = config.Bind("Auto Deposit", "Radius", 4f,
+            new ConfigDescription(
+                "How close in metres a dropped item must land to a chest for it to be stored.",
                 new AcceptableValueRange<float>(1f, 12f)));
+        _clusterGap = config.Bind("Auto Deposit", "Cluster Gap", 1f,
+            new ConfigDescription(
+                "Chests at most this far apart in metres (edge to edge) count as one group: an item that lands " +
+                "near one of them can go into any of them. 0 groups only chests that touch.",
+                new AcceptableValueRange<float>(0f, 4f)));
+        _throwAngle = config.Bind("Auto Deposit", "Throw Angle", 60f,
+            new ConfigDescription(
+                "Only chests within this many degrees of the direction you face when dropping an item are used, " +
+                "so items thrown away from a chest stay on the ground. 180 uses chests in every direction.",
+                new AcceptableValueRange<float>(10f, 180f)));
+        _delay = config.Bind("Auto Deposit", "Delay", 3f,
+            new ConfigDescription(
+                "Seconds a dropped item lies on the ground before it is stored, so other players can pick it up.",
+                new AcceptableValueRange<float>(0.5f, 10f)));
     }
 
     /// <summary>
-    /// Stores up to <paramref name="amount"/> of <paramref name="item"/> from <paramref name="from"/>
-    /// in nearby chests, and returns how many were stored.
+    /// Stores as much of the dropped item as fits in the chests it landed near.
     /// </summary>
-    private static int Deposit(Player player, Inventory from, ItemDrop.ItemData item, int amount)
+    private static void TryDeposit(ItemDrop drop, Vector3 throwFrom, Vector3 throwDir)
     {
-        List<Container> targets = GetTargets(player, item);
-
-        int capacity = 0;
-        foreach (Container container in targets)
+        // Someone else has asked for the item (to pick it up), so it is theirs now.
+        ZNetView nview = drop.m_nview;
+        if (!_enabled.Value || Player.m_localPlayer == null
+            || nview == null || !nview.IsValid() || !nview.IsOwner())
         {
-            capacity += SpaceFor(container.GetInventory(), item, amount - capacity);
-            if (capacity >= amount)
-            {
-                break;
-            }
+            return;
         }
 
-        if (capacity <= 0)
+        ItemDrop.ItemData item = drop.m_itemData;
+        int amount = item.m_stack;
+        if (amount <= 0)
         {
-            return 0;
+            return;
         }
 
-        // Same as dropping: the item leaves the player's hands first.
-        player.RemoveEquipAction(item);
-        player.UnequipItem(item, triggerEquipEffects: false);
-        if (player.m_hiddenLeftItem == item || player.m_hiddenRightItem == item)
-        {
-            if (player.m_hiddenLeftItem == item)
-            {
-                player.m_hiddenLeftItem = null;
-            }
+        Transform transform = drop.transform;
+        Vector3 position = transform.position;
+        Quaternion rotation = transform.rotation;
 
-            if (player.m_hiddenRightItem == item)
-            {
-                player.m_hiddenRightItem = null;
-            }
-
-            player.SetupVisEquipment(player.m_visEquipment, isRagdoll: false);
-        }
-
-        // The look is copied before the stack shrinks below, as it may be removed entirely.
+        // The look is copied before the stack shrinks below.
         ItemDrop.ItemData look = item.Clone();
         string itemName = item.m_shared.m_name;
         Sprite icon = item.GetIcon();
         int stored = 0;
-        foreach (Container container in targets)
+        foreach (Container container in GetTargets(position, throwFrom, throwDir, item))
         {
             int remaining = amount - stored;
             if (remaining <= 0)
@@ -105,22 +123,27 @@ internal static class AutoDeposit
                 continue;
             }
 
-            _ = from.RemoveItem(item, added);
             stored += added;
 
             // The item is stored already; this only shows where it went.
             string chestName = container.GetHoverName();
-            DepositEffect.Spawn(player, look, container, () => OnArrive(container, itemName, chestName, added, icon));
+            DepositEffect.Spawn(look, position, rotation, container,
+                () => OnArrive(container, itemName, chestName, added, icon));
         }
 
-        if (stored > 0)
+        if (stored <= 0)
         {
-            // Same animation and sound as a vanilla drop.
-            player.m_zanim.SetTrigger("interact");
-            _ = player.m_dropEffects.Create(player.transform.position, Quaternion.identity, null, 1f, -1, player.GetZDOID());
+            return;
         }
 
-        return stored;
+        if (stored >= amount)
+        {
+            nview.Destroy();
+        }
+        else
+        {
+            drop.SetStack(amount - stored);
+        }
     }
 
     private static void OnArrive(Container container, string itemName, string chestName, int amount, Sprite icon)
@@ -136,33 +159,78 @@ internal static class AutoDeposit
         }
     }
 
-    /// <summary>
-    /// Chests within range that can take some of the item: those that already hold it first, then the
-    /// rest, each group nearest first.
-    /// </summary>
-    private static List<Container> GetTargets(Player player, ItemDrop.ItemData item)
+    private readonly struct Chest(Container container, Bounds bounds)
     {
-        Vector3 pos = player.transform.position;
-        float maxSqr = _radius.Value * _radius.Value;
+        public Container Container { get; } = container;
+        public Bounds Bounds { get; } = bounds;
+    }
 
-        List<Container> nearby = [];
+    /// <summary>
+    /// The chests an item that landed at <paramref name="position"/> can go into, in the order to fill them:
+    /// those that already hold it first, then the rest, each group nearest first.
+    /// <para>
+    /// The item must land within range of a chest the player threw it towards. That chest and every chest
+    /// grouped with it (chains of chests close to each other) are used, however far they are from the item.
+    /// </para>
+    /// </summary>
+    private static List<Container> GetTargets(Vector3 position, Vector3 throwFrom, Vector3 throwDir, ItemDrop.ItemData item)
+    {
         _ = Containers.RemoveAll(c => c == null);
+        List<Chest> chests = [];
         foreach (Container container in Containers)
         {
-            if ((container.transform.position - pos).sqrMagnitude <= maxSqr && CanDepositInto(container))
+            if (IsChest(container))
             {
-                nearby.Add(container);
+                chests.Add(new Chest(container, BoundsOf(container)));
             }
         }
 
-        nearby.Sort((a, b) =>
-            (a.transform.position - pos).sqrMagnitude.CompareTo((b.transform.position - pos).sqrMagnitude));
+        // The nearest chest in the direction of the throw that the item landed close enough to.
+        float maxSqr = _radius.Value * _radius.Value;
+        int anchor = -1;
+        float anchorSqr = float.MaxValue;
+        for (int i = 0; i < chests.Count; i++)
+        {
+            float sqr = chests[i].Bounds.SqrDistance(position);
+            if (sqr <= maxSqr && sqr < anchorSqr && IsThrownTowards(chests[i].Bounds.center, throwFrom, throwDir))
+            {
+                anchor = i;
+                anchorSqr = sqr;
+            }
+        }
+
+        if (anchor < 0)
+        {
+            return [];
+        }
+
+        // Grow the group from that chest: any chest close enough to one already in it joins.
+        List<Chest> cluster = [chests[anchor]];
+        chests.RemoveAt(anchor);
+        float gap = _clusterGap.Value;
+        for (int i = 0; i < cluster.Count; i++)
+        {
+            Bounds reach = cluster[i].Bounds;
+            reach.Expand(gap * 2f);
+            for (int j = chests.Count - 1; j >= 0; j--)
+            {
+                if (reach.Intersects(chests[j].Bounds))
+                {
+                    cluster.Add(chests[j]);
+                    chests.RemoveAt(j);
+                }
+            }
+        }
+
+        // Unavailable chests still link the group together, but nothing goes into them.
+        _ = cluster.RemoveAll(c => !CanDepositInto(c.Container));
+        cluster.Sort((a, b) => a.Bounds.SqrDistance(position).CompareTo(b.Bounds.SqrDistance(position)));
 
         List<Container> targets = [];
         List<Container> others = [];
-        foreach (Container container in nearby)
+        foreach (Chest chest in cluster)
         {
-            (container.GetInventory().ContainsItemByName(item.m_shared.m_name) ? targets : others).Add(container);
+            (chest.Container.GetInventory().ContainsItemByName(item.m_shared.m_name) ? targets : others).Add(chest.Container);
         }
 
         targets.AddRange(others);
@@ -170,9 +238,47 @@ internal static class AutoDeposit
     }
 
     /// <summary>
-    /// Only player-built chests that the player could open normally and that nobody else is using.
+    /// Whether the chest at <paramref name="target"/> is within the throw angle of the direction the
+    /// player faced, ignoring height. A chest right under the player counts as either way.
     /// </summary>
-    private static bool CanDepositInto(Container container)
+    private static bool IsThrownTowards(Vector3 target, Vector3 throwFrom, Vector3 throwDir)
+    {
+        Vector3 toTarget = target - throwFrom;
+        toTarget.y = 0f;
+        return toTarget.sqrMagnitude < 0.01f || Vector3.Angle(throwDir, toTarget) <= _throwAngle.Value;
+    }
+
+    private static Bounds BoundsOf(Container container)
+    {
+        bool found = false;
+        Bounds bounds = default;
+        foreach (Collider collider in container.GetComponentsInChildren<Collider>())
+        {
+            if (!collider.enabled || collider.isTrigger)
+            {
+                continue;
+            }
+
+            if (found)
+            {
+                bounds.Encapsulate(collider.bounds);
+            }
+            else
+            {
+                bounds = collider.bounds;
+                found = true;
+            }
+        }
+
+        return found
+            ? bounds
+            : new Bounds(container.transform.position + (Vector3.up * (FallbackChestSize.y / 2f)), FallbackChestSize);
+    }
+
+    /// <summary>
+    /// Player-built chests: not carts, tombstones or containers that vanish when emptied.
+    /// </summary>
+    private static bool IsChest(Container container)
     {
         if (container.GetInventory() == null
             || container.m_wagon != null
@@ -184,14 +290,17 @@ internal static class AutoDeposit
         }
 
         ZNetView nview = container.m_nview;
-        if (nview == null || !nview.IsValid())
-        {
-            return false;
-        }
+        return nview != null && nview.IsValid();
+    }
 
+    /// <summary>
+    /// Only chests that the player could open normally and that nobody else is using.
+    /// </summary>
+    private static bool CanDepositInto(Container container)
+    {
         // The chest we have open ourselves is fine; one someone else has open is not.
         bool openHere = InventoryGui.instance != null && InventoryGui.instance.m_currentContainer == container;
-        bool free = openHere || (!container.IsInUse() && nview.GetZDO().GetInt(ZDOVars.s_inUse) != 1);
+        bool free = openHere || (!container.IsInUse() && container.m_nview.GetZDO().GetInt(ZDOVars.s_inUse) != 1);
         bool allowed = container.CheckAccess(Game.instance.GetPlayerProfile().GetPlayerID());
         bool warded = container.m_checkGuardStone && !PrivateArea.CheckAccess(container.transform.position, 0f, false);
         return free && allowed && !warded;
@@ -233,6 +342,53 @@ internal static class AutoDeposit
         return Mathf.Min(free, amount);
     }
 
+    /// <summary>
+    /// Watches an item the local player dropped, and tries to store it once it has lain on the ground for
+    /// the delay. It goes away with the item, e.g. when someone picks it up.
+    /// </summary>
+    private sealed class PendingDeposit : MonoBehaviour
+    {
+        private ItemDrop _drop;
+        private Rigidbody _body;
+        private Vector3 _throwFrom;
+        private Vector3 _throwDir;
+        private float _depositAt;
+
+        public static void Watch(ItemDrop drop, Player thrower)
+        {
+            PendingDeposit pending = drop.gameObject.AddComponent<PendingDeposit>();
+            pending._drop = drop;
+            pending._body = drop.GetComponent<Rigidbody>();
+            pending._throwFrom = thrower.transform.position;
+            Vector3 dir = thrower.transform.forward;
+            dir.y = 0f;
+            pending._throwDir = dir.sqrMagnitude > 0.0001f ? dir.normalized : Vector3.forward;
+            pending._depositAt = Time.time + _delay.Value;
+        }
+
+        private void Update()
+        {
+            float time = Time.time;
+            if (time < _depositAt)
+            {
+                return;
+            }
+
+            // Wait for it to stop rolling, so it is judged by where it ends up.
+            bool moving = _body != null && !_body.isKinematic && _body.linearVelocity.sqrMagnitude > SettledSpeedSqr;
+            if (moving && time < _depositAt + MaxSettleTime)
+            {
+                return;
+            }
+
+            Destroy(this);
+            if (_drop != null)
+            {
+                TryDeposit(_drop, _throwFrom, _throwDir);
+            }
+        }
+    }
+
     [HarmonyPatch(typeof(Container), "Awake")]
     private static class Container_Awake_Patch
     {
@@ -247,45 +403,51 @@ internal static class AutoDeposit
     }
 
     /// <summary>
-    /// Every way of dropping an item from the inventory (dragging it out, Ctrl+click) ends up here.
+    /// Every way of dropping an item from the inventory (dragging it out, Ctrl+click) ends up here. The item
+    /// is dropped as normal; the drop is only marked so <see cref="ItemDrop_OnPlayerDrop_Patch"/> watches it.
     /// </summary>
     [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.DropItem))]
     private static class Humanoid_DropItem_Patch
     {
         [HarmonyPrefix]
-        private static bool Prefix(Humanoid __instance, Inventory inventory, ItemDrop.ItemData item, ref int amount, ref bool __result)
+        private static void Prefix(Humanoid __instance, Inventory inventory, ItemDrop.ItemData item, int amount)
         {
+            _dropper = null;
             if (_enabled == null || !_enabled.Value
                 || __instance != Player.m_localPlayer
                 || item == null || amount <= 0 || item.m_shared.m_questItem)
             {
-                return true;
+                return;
             }
 
             Player player = Player.m_localPlayer;
             inventory ??= player.GetInventory();
 
             // Items dragged out of a chest are dropped as normal; storing them would put them straight back.
-            if (inventory != player.GetInventory() || !inventory.ContainsItem(item))
+            if (inventory == player.GetInventory() && inventory.ContainsItem(item))
             {
-                return true;
+                _dropper = player;
             }
+        }
 
-            int stored = Deposit(player, inventory, item, Mathf.Min(amount, item.m_stack));
-            if (stored <= 0)
+        [HarmonyFinalizer]
+        private static void Finalizer()
+        {
+            _dropper = null;
+        }
+    }
+
+    [HarmonyPatch(typeof(ItemDrop), nameof(ItemDrop.OnPlayerDrop))]
+    private static class ItemDrop_OnPlayerDrop_Patch
+    {
+        [HarmonyPostfix]
+        private static void Postfix(ItemDrop __instance)
+        {
+            if (_dropper != null)
             {
-                return true;
+                PendingDeposit.Watch(__instance, _dropper);
+                _dropper = null;
             }
-
-            // Let the game drop whatever didn't fit.
-            amount -= stored;
-            if (amount > 0 && inventory.ContainsItem(item))
-            {
-                return true;
-            }
-
-            __result = true;
-            return false;
         }
     }
 }
