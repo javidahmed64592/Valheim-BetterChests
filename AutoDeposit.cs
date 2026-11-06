@@ -69,15 +69,22 @@ internal static class AutoDeposit
     /// </summary>
     private static void TryDeposit(ItemDrop drop, Vector3 throwFrom, Vector3 throwDir)
     {
-        // Someone else has asked for the item (to pick it up), so it is theirs now.
         ZNetView nview = drop.m_nview;
-        if (!_enabled.Value || Player.m_localPlayer == null
-            || nview == null || !nview.IsValid() || !nview.IsOwner())
+        if (!_enabled.Value || Player.m_localPlayer == null || nview == null || !nview.IsValid())
         {
             return;
         }
 
         ItemDrop.ItemData item = drop.m_itemData;
+        string itemName = item.m_shared.m_name;
+
+        // Someone else has asked for the item (to pick it up), so it is theirs now.
+        if (!nview.IsOwner())
+        {
+            Log(itemName, "another player now owns it");
+            return;
+        }
+
         int amount = item.m_stack;
         if (amount <= 0)
         {
@@ -90,10 +97,16 @@ internal static class AutoDeposit
 
         // The look is copied before the stack shrinks below.
         ItemDrop.ItemData look = item.Clone();
-        string itemName = item.m_shared.m_name;
         Sprite icon = item.GetIcon();
+        List<Container> targets = GetTargets(position, throwFrom, throwDir, item);
+        if (targets.Count == 0)
+        {
+            Log(itemName, "no usable chest within range in the direction it was thrown");
+            return;
+        }
+
         int stored = 0;
-        foreach (Container container in GetTargets(position, throwFrom, throwDir, item))
+        foreach (Container container in targets)
         {
             int remaining = amount - stored;
             if (remaining <= 0)
@@ -133,6 +146,7 @@ internal static class AutoDeposit
 
         if (stored <= 0)
         {
+            Log(itemName, "the chests near it are full");
             return;
         }
 
@@ -144,6 +158,11 @@ internal static class AutoDeposit
         {
             drop.SetStack(amount - stored);
         }
+    }
+
+    private static void Log(string itemName, string reason)
+    {
+        BetterChestsPlugin._log.LogInfo("Auto deposit: left " + itemName + " on the ground: " + reason);
     }
 
     private static void OnArrive(Container container, string itemName, string chestName, int amount, Sprite icon)
@@ -404,7 +423,7 @@ internal static class AutoDeposit
 
     /// <summary>
     /// Every way of dropping an item from the inventory (dragging it out, Ctrl+click) ends up here. The item
-    /// is dropped as normal; the drop is only marked so <see cref="ItemDrop_OnPlayerDrop_Patch"/> watches it.
+    /// is dropped as normal; the drop is only marked so <see cref="ItemDrop_DropItem_Patch"/> watches it.
     /// </summary>
     [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.DropItem))]
     private static class Humanoid_DropItem_Patch
@@ -437,15 +456,19 @@ internal static class AutoDeposit
         }
     }
 
-    [HarmonyPatch(typeof(ItemDrop), nameof(ItemDrop.OnPlayerDrop))]
-    private static class ItemDrop_OnPlayerDrop_Patch
+    /// <summary>
+    /// Creates the item that <see cref="Humanoid.DropItem"/> throws. (Not <c>ItemDrop.OnPlayerDrop</c>, which
+    /// is so small that the game's JIT inlines it into the caller, so a patch on it never runs.)
+    /// </summary>
+    [HarmonyPatch(typeof(ItemDrop), nameof(ItemDrop.DropItem))]
+    private static class ItemDrop_DropItem_Patch
     {
         [HarmonyPostfix]
-        private static void Postfix(ItemDrop __instance)
+        private static void Postfix(ItemDrop __result)
         {
-            if (_dropper != null)
+            if (_dropper != null && __result != null)
             {
-                PendingDeposit.Watch(__instance, _dropper);
+                PendingDeposit.Watch(__result, _dropper);
                 _dropper = null;
             }
         }

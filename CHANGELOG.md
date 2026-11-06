@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.1
+
+- Fixed auto deposit never storing dropped items: the hook that starts watching a dropped item never ran.
+- When a dropped item is left on the ground, the reason is written to the BepInEx log.
+
 ## 0.3.0
 
 - Dropped items now land on the ground and lie there for 3 seconds before being stored, so other players can pick them up first. Previously they went straight into the chest.
