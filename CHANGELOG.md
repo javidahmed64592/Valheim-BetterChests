@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0
+
+- Dropped items now land on the ground and lie there for 3 seconds before being stored, so other players can pick them up first. Previously they went straight into the chest.
+- The distance to a chest is now measured from where the item lands, not from the player.
+- Only chests in the direction you throw an item are used (within 60 degrees of the way you face), so items dropped with your back to a chest stay on the ground.
+- Chests close together count as one group: an item that lands near one of them can go into any of them, filling chests that already hold it first.
+- Lowered the default auto deposit radius from 6m to 4m.
+- Added the Cluster Gap, Throw Angle and Delay settings.
+
 ## 0.2.1
 
 - Lowered the default auto deposit radius from 10m to 6m, and the maximum from 50m to 12m.
