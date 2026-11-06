@@ -7,6 +7,7 @@
 Enhances chests with additional features like sorting and auto-depositing!
 
 ![Chest Interface](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/game_screenshot_1.png)
+
 ![Split Stack Window](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/game_screenshot_2.png)
 
 | Configurable Key    | Action                                                                                          |
