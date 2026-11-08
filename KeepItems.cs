@@ -1,3 +1,8 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Reflection.Emit;
+
 using HarmonyLib;
 
 using UnityEngine;
@@ -7,7 +12,7 @@ namespace BetterChests;
 
 /// <summary>
 /// <para>
-/// Items in the player's inventory can be marked to be kept by "Deposit all", by holding the keep key
+/// Items in the player's inventory can be marked to be kept by "Deposit all" and "Place stacks", by holding the keep key
 /// (Alt) and right-clicking them. The mark is stored in the item's custom data, so it is saved with the
 /// item and follows it around the inventory. Marked items get a frame around their slot.
 /// </para>
@@ -122,6 +127,51 @@ internal static class KeepItems
 
             Toggle(item);
             return false;
+        }
+    }
+
+    /// <summary>
+    /// The player's items that "Place stacks" may move: all of them except marked ones. Equipped items are
+    /// already skipped by vanilla, and hotbar items are placed as in vanilla.
+    /// </summary>
+    private static List<ItemDrop.ItemData> ItemsToStack(Inventory fromInventory)
+    {
+        List<ItemDrop.ItemData> items = fromInventory.GetAllItems();
+        return Player.m_localPlayer == null || fromInventory != Player.m_localPlayer.GetInventory()
+            ? items
+            : [.. items.Where(item => !IsMarked(item) || AlwaysKept(item))];
+    }
+
+    /// <summary>
+    /// "Place stacks" (the button, its key, and holding use on a chest) copies the player's item list and
+    /// moves what matches; this swaps that list for one without the marked items.
+    /// </summary>
+    [HarmonyPatch(typeof(Inventory), nameof(Inventory.StackAll))]
+    private static class Inventory_StackAll_Patch
+    {
+        private static readonly MethodInfo GetAllItems = AccessTools.Method(typeof(Inventory), nameof(Inventory.GetAllItems));
+        private static readonly MethodInfo Replacement = AccessTools.Method(typeof(KeepItems), nameof(ItemsToStack));
+
+        [HarmonyTranspiler]
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            bool replaced = false;
+            foreach (CodeInstruction instruction in instructions)
+            {
+                if (!replaced && instruction.Calls(GetAllItems))
+                {
+                    replaced = true;
+                    yield return new CodeInstruction(OpCodes.Call, Replacement).MoveLabelsFrom(instruction);
+                    continue;
+                }
+
+                yield return instruction;
+            }
+
+            if (!replaced)
+            {
+                BetterChestsPlugin._log.LogWarning("Inventory.StackAll not as expected: Place stacks will not skip kept items.");
+            }
         }
     }
 

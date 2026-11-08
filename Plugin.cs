@@ -48,8 +48,8 @@ public class BetterChestsPlugin : BaseUnityPlugin
         _sortKey = BindKey("Sort", "Sort", KeyCode.G,
             "While a chest is open, sorts its contents (the same as the \"Sort\" button).");
         _keepItemKey = BindKey("Keep Item", "KeepItem", KeyCode.LeftAlt,
-            "Hold and right-click an item in your inventory to mark it to be kept by \"Deposit all\", or to " +
-            "unmark it. The left and right versions of Shift, Ctrl and Alt both work.");
+            "Hold and right-click an item in your inventory to mark it to be kept by \"Deposit all\" and " +
+            "\"Place stacks\", or to unmark it. The left and right versions of Shift, Ctrl and Alt both work.");
 
         AutoDeposit.BindConfig(Config);
 

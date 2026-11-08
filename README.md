@@ -13,10 +13,10 @@ Enhances chests with additional features like sorting and auto-depositing!
 | Configurable Key    | Action                                                                                          |
 | ------------------- | ----------------------------------------------------------------------------------------------- |
 | `R`                 | Take all: move everything in the open chest into your inventory.                                |
-| `T`                 | Place stacks: move items onto matching stacks in the open chest.                                |
+| `T`                 | Place stacks: move items, except marked ones, onto matching stacks in the open chest.           |
 | `F`                 | Deposit all: move everything except your hotbar, equipped and marked items into the open chest. |
 | `G`                 | Sort the open chest.                                                                            |
-| `Alt` + Right-click | Mark or unmark an item in your inventory to keep it when depositing all.                        |
+| `Alt` + Right-click | Mark or unmark an item in your inventory to keep it when depositing all or placing stacks.      |
 | Mouse wheel         | Change the amount by one when splitting a stack (Shift+click).                                  |
 
 ## Auto Deposit
@@ -31,6 +31,7 @@ Only chests you could open yourself are used: not private chests of other player
 The open chest gets a **Deposit all** button under **Take all**.
 It moves everything in your inventory into the chest, except your hotbar (the top row of your inventory) and anything you have equipped, so you can empty your bags after an adventure without losing your gear.
 To keep other items too, such as your food, hold **Alt** and right-click them in your inventory.
+Marked items are also kept by **Place stacks**.
 
 ## Sort
 
