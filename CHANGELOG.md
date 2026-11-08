@@ -7,6 +7,7 @@
 - The auto deposit `Radius`, `Cluster Gap` and `Delay` are now synced from the server when it has the mod. `Enabled` and `Throw Angle` stay your own choice.
 - Buttons, key hints and messages can now be translated (`Translations/English.json`).
 - Added a CI check that the version matches in every file.
+- Moved `package.sh` into `.github/scripts` and made it the same for every mod: the name, version and DLL now come from `manifest.json` and the `.csproj`.
 
 ## 0.3.2
 
