@@ -1,0 +1,11 @@
+{
+  "betterchests_deposit_all": "Deposit all",
+  "betterchests_sort": "Sort",
+  "betterchests_hint_take_all": "Take all",
+  "betterchests_hint_place_stacks": "Place stacks",
+  "betterchests_hint_split": "Split amount",
+  "betterchests_hint_keep": "Keep when depositing",
+  "betterchests_mouse_wheel": "Mouse wheel",
+  "betterchests_stored": "Stored $1 in $2",
+  "betterchests_always_kept": "Hotbar and equipped items are never deposited"
+}

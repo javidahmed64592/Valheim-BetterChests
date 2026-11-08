@@ -55,7 +55,8 @@ internal static class ChestButtons
         {
             // Match the vanilla button's capitalisation.
             bool upper = !string.IsNullOrEmpty(label.text) && !label.text.Any(char.IsLower);
-            label.text = upper ? text.ToUpperInvariant() : text;
+            string localized = Localization.instance.Localize(text);
+            label.text = upper ? localized.ToUpperInvariant() : localized;
         }
 
         Button button = go.GetComponent<Button>();
@@ -70,9 +71,9 @@ internal static class ChestButtons
         [HarmonyPostfix]
         private static void Postfix(InventoryGui __instance)
         {
-            RectTransform depositAll = CreateButtonBelow(__instance.m_takeAllButton, "BetterChests_DepositAll", "Deposit all",
+            RectTransform depositAll = CreateButtonBelow(__instance.m_takeAllButton, "BetterChests_DepositAll", "$betterchests_deposit_all",
                 DepositAll.DepositIntoOpenContainer);
-            RectTransform sort = CreateButtonBelow(__instance.m_stackAllButton, "BetterChests_Sort", "Sort",
+            RectTransform sort = CreateButtonBelow(__instance.m_stackAllButton, "BetterChests_Sort", "$betterchests_sort",
                 ChestSort.SortOpenContainer);
             ChestPanelLayout.Setup(__instance, [.. new[] { depositAll, sort }.Where(b => b != null)]);
         }

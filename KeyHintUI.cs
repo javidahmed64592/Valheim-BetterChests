@@ -44,14 +44,14 @@ internal static class KeyHintUI
 
     private static readonly HintDef[] Hints =
     [
-        new HintDef { Label = "Take all", Key = () => BetterChestsPlugin._takeAllKey, Visibility = HintVisibility.ContainerOnly },
-        new HintDef { Label = "Place stacks", Key = () => BetterChestsPlugin._placeStacksKey, Visibility = HintVisibility.ContainerOnly },
-        new HintDef { Label = "Deposit all", Key = () => BetterChestsPlugin._depositAllKey, Visibility = HintVisibility.ContainerOnly },
-        new HintDef { Label = "Sort", Key = () => BetterChestsPlugin._sortKey, Visibility = HintVisibility.ContainerOnly },
-        new HintDef { Label = "Split amount", Scroll = true, Visibility = HintVisibility.SplitDialogOnly },
+        new HintDef { Label = "$betterchests_hint_take_all", Key = () => BetterChestsPlugin._takeAllKey, Visibility = HintVisibility.ContainerOnly },
+        new HintDef { Label = "$betterchests_hint_place_stacks", Key = () => BetterChestsPlugin._placeStacksKey, Visibility = HintVisibility.ContainerOnly },
+        new HintDef { Label = "$betterchests_deposit_all", Key = () => BetterChestsPlugin._depositAllKey, Visibility = HintVisibility.ContainerOnly },
+        new HintDef { Label = "$betterchests_sort", Key = () => BetterChestsPlugin._sortKey, Visibility = HintVisibility.ContainerOnly },
+        new HintDef { Label = "$betterchests_hint_split", Scroll = true, Visibility = HintVisibility.SplitDialogOnly },
         new HintDef
         {
-            Label = "Keep when depositing",
+            Label = "$betterchests_hint_keep",
             Key = () => BetterChestsPlugin._keepItemKey,
             WithRightClick = true,
             Visibility = HintVisibility.NotSplitting
@@ -205,7 +205,7 @@ internal static class KeyHintUI
     private static GameObject CreateItem(HintDef hint, Transform template, Transform keyboard)
     {
         GameObject item = Object.Instantiate(template.gameObject, keyboard, false);
-        item.name = ItemPrefix + hint.Label;
+        item.name = ItemPrefix + hint.Label.TrimStart('$');
         item.SetActive(false);
 
         Transform label = item.transform.Find("Text");
@@ -216,7 +216,7 @@ internal static class KeyHintUI
             Object.DestroyImmediate(fixedSize);
         }
 
-        label.GetComponent<TMP_Text>().text = hint.Label;
+        label.GetComponent<TMP_Text>().text = Localization.instance.Localize(hint.Label);
         return item;
     }
 
@@ -232,7 +232,7 @@ internal static class KeyHintUI
         }
 
         GameObject item = CreateItem(hint, keyTemplate, keyboard);
-        item.transform.Find("key_bkg").GetComponentInChildren<TMP_Text>(true).text = "Mouse wheel";
+        item.transform.Find("key_bkg").GetComponentInChildren<TMP_Text>(true).text = Localization.instance.Localize("$betterchests_mouse_wheel");
         return item;
     }
 
