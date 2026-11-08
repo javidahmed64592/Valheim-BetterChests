@@ -169,13 +169,15 @@ internal static class AutoDeposit
 
             ForgetStaleRequests();
             deposit.AskedAt = Time.time;
-            if (!Awaiting.TryGetValue(container, out List<Deposit> waiting))
+            if (Awaiting.TryGetValue(container, out List<Deposit> waiting))
             {
-                waiting = [];
-                Awaiting[container] = waiting;
-                container.m_nview.InvokeRPC("RPC_RequestOpen", Game.instance.GetPlayerProfile().GetPlayerID());
+                waiting.Add(deposit); // the chest's owner has already been asked
+                return;
             }
-            waiting.Add(deposit);
+
+            // Listed before asking: when this player owns the chest, the answer arrives during the call.
+            Awaiting[container] = [deposit];
+            container.m_nview.InvokeRPC("RPC_RequestOpen", Game.instance.GetPlayerProfile().GetPlayerID());
             return;
         }
 
