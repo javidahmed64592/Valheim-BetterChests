@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.2
+
+- Items marked to keep (Alt + right-click) now also stay in your inventory when using Place stacks, not just Deposit all.
+
 ## 0.3.1
 
 - Fixed auto deposit never storing dropped items: the hook that starts watching a dropped item never ran.
