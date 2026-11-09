@@ -46,13 +46,13 @@ internal static class AutoDeposit
             "Dropping an item near chests stores it in them instead of leaving it on the ground.");
         _radius = config.Bind("Auto Deposit", "Radius", 4f,
             new ConfigDescription(
-                "How close in metres a dropped item must land to a chest for it to be stored.",
-                new AcceptableValueRange<float>(1f, 12f)));
+                "How close in metres a dropped item must land to a chest for it to be stored. (Synced with server)",
+                new AcceptableValueRange<float>(1f, 12f), Synced()));
         _clusterGap = config.Bind("Auto Deposit", "Cluster Gap", 1f,
             new ConfigDescription(
                 "Chests at most this far apart in metres (edge to edge) count as one group: an item that lands " +
-                "near one of them can go into any of them. 0 groups only chests that touch.",
-                new AcceptableValueRange<float>(0f, 4f)));
+                "near one of them can go into any of them. 0 groups only chests that touch. (Synced with server)",
+                new AcceptableValueRange<float>(0f, 4f), Synced()));
         _throwAngle = config.Bind("Auto Deposit", "Throw Angle", 60f,
             new ConfigDescription(
                 "Only chests within this many degrees of the direction you face when dropping an item are used, " +
@@ -60,12 +60,49 @@ internal static class AutoDeposit
                 new AcceptableValueRange<float>(10f, 180f)));
         _delay = config.Bind("Auto Deposit", "Delay", 3f,
             new ConfigDescription(
-                "Seconds a dropped item lies on the ground before it is stored, so other players can pick it up.",
-                new AcceptableValueRange<float>(0.5f, 10f)));
+                "Seconds a dropped item lies on the ground before it is stored, so other players can pick it up. (Synced with server)",
+                new AcceptableValueRange<float>(0.5f, 10f), Synced()));
+    }
+
+    /// <summary>Settings that use the server's value when the server has the mod.</summary>
+    private static ConfigurationManagerAttributes Synced()
+    {
+        return new ConfigurationManagerAttributes { IsAdminOnly = true };
     }
 
     /// <summary>
-    /// Stores as much of the dropped item as fits in the chests it landed near.
+    /// How long to wait for a chest's owner to answer before giving up on that chest.
+    /// </summary>
+    private const float RequestTimeout = 5f;
+
+    /// <summary>
+    /// A dropped item on its way into a group of chests, one chest at a time.
+    /// </summary>
+    private sealed class Deposit
+    {
+        public ItemDrop Drop;
+        public Queue<Container> Targets;
+        public ItemDrop.ItemData Look;
+        public Sprite Icon;
+        public Vector3 Position;
+        public Quaternion Rotation;
+        public string ItemName;
+        public int Stored;
+        public float AskedAt;
+    }
+
+    /// <summary>
+    /// Deposits waiting for a chest's owner to hand the chest over.
+    /// </summary>
+    private static readonly Dictionary<Container, List<Deposit>> Awaiting = [];
+
+    /// <summary>
+    /// Chests the player has asked to open themselves while a deposit was waiting on them.
+    /// </summary>
+    private static readonly HashSet<Container> OpenedByPlayer = [];
+
+    /// <summary>
+    /// Starts storing the dropped item in the chests it landed near.
     /// </summary>
     private static void TryDeposit(ItemDrop drop, Vector3 throwFrom, Vector3 throwDir)
     {
@@ -85,79 +122,191 @@ internal static class AutoDeposit
             return;
         }
 
-        int amount = item.m_stack;
-        if (amount <= 0)
+        if (item.m_stack <= 0)
         {
             return;
         }
 
-        Transform transform = drop.transform;
-        Vector3 position = transform.position;
-        Quaternion rotation = transform.rotation;
-
-        // The look is copied before the stack shrinks below.
-        ItemDrop.ItemData look = item.Clone();
-        Sprite icon = item.GetIcon();
-        List<Container> targets = GetTargets(position, throwFrom, throwDir, item);
+        List<Container> targets = GetTargets(drop.transform.position, throwFrom, throwDir, item);
         if (targets.Count == 0)
         {
             Log(itemName, "no usable chest within range in the direction it was thrown");
             return;
         }
 
-        int stored = 0;
-        foreach (Container container in targets)
+        Next(new Deposit
         {
-            int remaining = amount - stored;
-            if (remaining <= 0)
-            {
-                break;
-            }
+            Drop = drop,
+            Targets = new Queue<Container>(targets),
+            // The look is copied before the stack shrinks.
+            Look = item.Clone(),
+            Icon = item.GetIcon(),
+            Position = drop.transform.position,
+            Rotation = drop.transform.rotation,
+            ItemName = itemName,
+        });
+    }
 
-            Inventory inventory = container.GetInventory();
-            int fits = SpaceFor(inventory, item, remaining);
-            if (fits <= 0)
-            {
-                continue;
-            }
-
-            // Only the owner's changes are saved, so take ownership of chests held by others.
-            if (!container.IsOwner())
-            {
-                container.m_nview.ClaimOwnership();
-            }
-
-            ItemDrop.ItemData moved = item.Clone();
-            moved.m_stack = fits;
-            // On failure AddItem leaves the part it couldn't place in moved.m_stack.
-            int added = inventory.AddItem(moved) ? fits : fits - moved.m_stack;
-            if (added <= 0)
-            {
-                continue;
-            }
-
-            stored += added;
-
-            // The item is stored already; this only shows where it went.
-            string chestName = container.GetHoverName();
-            DepositEffect.Spawn(look, position, rotation, container,
-                () => OnArrive(container, itemName, chestName, added, icon));
-        }
-
-        if (stored <= 0)
+    /// <summary>
+    /// Asks the next chest with room to take the item. Only a chest's owner may change it, so, like opening a
+    /// chest yourself, its owner is asked to hand it over; they refuse if someone has it open.
+    /// </summary>
+    private static void Next(Deposit deposit)
+    {
+        if (!StillOurs(deposit))
         {
-            Log(itemName, "the chests near it are full");
             return;
         }
 
-        if (stored >= amount)
+        while (deposit.Targets.Count > 0)
         {
-            nview.Destroy();
+            Container container = deposit.Targets.Dequeue();
+            if (container == null || !container.m_nview.IsValid() || !CanDepositInto(container)
+                || SpaceFor(container.GetInventory(), deposit.Drop.m_itemData, deposit.Drop.m_itemData.m_stack) <= 0)
+            {
+                continue;
+            }
+
+            ForgetStaleRequests();
+            deposit.AskedAt = Time.time;
+            if (Awaiting.TryGetValue(container, out List<Deposit> waiting))
+            {
+                waiting.Add(deposit); // the chest's owner has already been asked
+                return;
+            }
+
+            // Listed before asking: when this player owns the chest, the answer arrives during the call.
+            Awaiting[container] = [deposit];
+            container.m_nview.InvokeRPC("RPC_RequestOpen", Game.instance.GetPlayerProfile().GetPlayerID());
+            return;
+        }
+
+        if (deposit.Stored <= 0)
+        {
+            Log(deposit.ItemName, "the chests near it are full or in use");
+        }
+    }
+
+    /// <summary>
+    /// The chest's owner answered. Returns true if the answer was for a deposit and should not open the chest.
+    /// </summary>
+    private static bool OnOpenResponse(Container container, bool granted)
+    {
+        if (!Awaiting.TryGetValue(container, out List<Deposit> waiting))
+        {
+            return false;
+        }
+
+        _ = Awaiting.Remove(container);
+        foreach (Deposit deposit in waiting)
+        {
+            if (granted && container.m_nview.IsValid() && container.IsOwner())
+            {
+                DepositInto(container, deposit);
+            }
+            Next(deposit);
+        }
+
+        // If the player also asked to open the chest, let the answer open it as usual.
+        return !OpenedByPlayer.Remove(container);
+    }
+
+    /// <summary>
+    /// Gives up on chests whose owner never answered (for example, they left), moving on to the next chest.
+    /// </summary>
+    private static void ForgetStaleRequests()
+    {
+        List<Container> stale = null;
+        foreach (KeyValuePair<Container, List<Deposit>> entry in Awaiting)
+        {
+            if (entry.Key == null || entry.Value.TrueForAll(d => Time.time - d.AskedAt > RequestTimeout))
+            {
+                (stale ??= []).Add(entry.Key);
+            }
+        }
+
+        if (stale == null)
+        {
+            return;
+        }
+
+        foreach (Container container in stale)
+        {
+            List<Deposit> waiting = Awaiting[container];
+            _ = Awaiting.Remove(container);
+            _ = OpenedByPlayer.Remove(container);
+            foreach (Deposit deposit in waiting)
+            {
+                Next(deposit);
+            }
+        }
+    }
+
+    /// <summary>
+    /// True while the dropped item still lies there and belongs to this player's game.
+    /// </summary>
+    private static bool StillOurs(Deposit deposit)
+    {
+        ItemDrop drop = deposit.Drop;
+        if (drop == null || drop.m_nview == null || !drop.m_nview.IsValid() || drop.m_itemData.m_stack <= 0)
+        {
+            return false;
+        }
+
+        if (!drop.m_nview.IsOwner())
+        {
+            Log(deposit.ItemName, "another player now owns it");
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Moves as much of the dropped item as fits into a chest this player's game now owns.
+    /// </summary>
+    private static void DepositInto(Container container, Deposit deposit)
+    {
+        if (!StillOurs(deposit) || !CanDepositInto(container))
+        {
+            return;
+        }
+
+        ItemDrop drop = deposit.Drop;
+        ItemDrop.ItemData item = drop.m_itemData;
+        int amount = item.m_stack;
+        Inventory inventory = container.GetInventory();
+        int fits = SpaceFor(inventory, item, amount);
+        if (fits <= 0)
+        {
+            return;
+        }
+
+        ItemDrop.ItemData moved = item.Clone();
+        moved.m_stack = fits;
+        // On failure AddItem leaves the part it couldn't place in moved.m_stack.
+        int added = inventory.AddItem(moved) ? fits : fits - moved.m_stack;
+        if (added <= 0)
+        {
+            return;
+        }
+
+        deposit.Stored += added;
+        if (added >= amount)
+        {
+            drop.m_nview.Destroy();
         }
         else
         {
-            drop.SetStack(amount - stored);
+            drop.SetStack(amount - added);
         }
+
+        // The item is stored already; this only shows where it went.
+        string chestName = container.GetHoverName();
+        string itemName = deposit.ItemName;
+        Sprite icon = deposit.Icon;
+        DepositEffect.Spawn(deposit.Look, deposit.Position, deposit.Rotation, container,
+            () => OnArrive(container, itemName, chestName, added, icon));
     }
 
     private static void Log(string itemName, string reason)
@@ -174,7 +323,9 @@ internal static class AutoDeposit
 
         if (Player.m_localPlayer != null)
         {
-            Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, "Stored " + itemName + " in " + chestName, amount, icon);
+            Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft,
+                Localization.instance.Localize("$betterchests_stored", Localization.instance.Localize(itemName),
+                    Localization.instance.Localize(chestName)), amount, icon);
         }
     }
 
@@ -404,6 +555,35 @@ internal static class AutoDeposit
             if (_drop != null)
             {
                 TryDeposit(_drop, _throwFrom, _throwDir);
+            }
+        }
+    }
+
+    /// <summary>
+    /// The owner's answer to a deposit's request: store the item instead of opening the chest.
+    /// </summary>
+    [HarmonyPatch(typeof(Container), "RPC_OpenResponse")]
+    private static class Container_RPC_OpenResponse_Patch
+    {
+        [HarmonyPrefix]
+        private static bool Prefix(Container __instance, bool granted)
+        {
+            return !OnOpenResponse(__instance, granted);
+        }
+    }
+
+    /// <summary>
+    /// Remembers that the player wants a chest open, so a deposit waiting on the same chest doesn't swallow it.
+    /// </summary>
+    [HarmonyPatch(typeof(Container), nameof(Container.Interact))]
+    private static class Container_Interact_Patch
+    {
+        [HarmonyPrefix]
+        private static void Prefix(Container __instance, bool hold)
+        {
+            if (!hold && Awaiting.ContainsKey(__instance))
+            {
+                _ = OpenedByPlayer.Add(__instance);
             }
         }
     }

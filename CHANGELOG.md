@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0
+
+- Auto deposit now asks a chest's owner for the chest the same way opening a chest does, instead of taking it over. A chest another player has open is skipped, and two players can no longer change a chest's contents at the same time. This also works when the other player doesn't have the mod.
+- Opening a chest just as an item is being stored in it still opens the chest.
+- The auto deposit `Radius`, `Cluster Gap` and `Delay` are now synced from the server when it has the mod. `Enabled` and `Throw Angle` stay your own choice.
+- Buttons, key hints and messages can now be translated (`Translations/English.json`).
+- Added a CI check that the version matches in every file.
+- Moved `package.sh` into `.github/scripts` and made it the same for every mod: the name, version and DLL now come from `manifest.json` and the `.csproj`.
+
 ## 0.3.2
 
 - Items marked to keep (Alt + right-click) now also stay in your inventory when using Place stacks, not just Deposit all.

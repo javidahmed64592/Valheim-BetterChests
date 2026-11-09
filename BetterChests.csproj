@@ -4,7 +4,7 @@
     <TargetFramework>net472</TargetFramework>
     <AssemblyName>BetterChests</AssemblyName>
     <Description>Enhances chests with additional features like sorting and auto-depositing!</Description>
-    <Version>0.3.2</Version>
+    <Version>0.4.0</Version>
     <LangVersion>latest</LangVersion>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
@@ -19,6 +19,11 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+  </ItemGroup>
+
+  <!-- Translations/<Language>.json, embedded and loaded by Translations.Load. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Translations\*.json" LogicalName="BetterChests.Translations.%(Filename).json" />
   </ItemGroup>
 
   <!-- In CI (GitHub Actions) there is no local Valheim install, so game/BepInEx DLLs

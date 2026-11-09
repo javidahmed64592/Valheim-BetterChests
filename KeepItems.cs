@@ -121,7 +121,7 @@ internal static class KeepItems
 
             if (AlwaysKept(item))
             {
-                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Hotbar and equipped items are never deposited");
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$betterchests_always_kept");
                 return false;
             }
 
