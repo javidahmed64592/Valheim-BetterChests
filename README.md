@@ -26,21 +26,31 @@ Dropping an item near any chest in a group stores it in them, prioritising chest
 
 Only chests you could open yourself are used: not private chests of other players, chests inside someone else's ward, or chests another player has open.
 
-## Deposit All
+## Chest Panel
+
+The chest panels have been improved with additional features and better layout handling.
+
+### Layout
+
+The chest panel grows taller to show every row of big chests without scrolling, as far as the bottom of the screen.
+The wardrobe is shown as 10 columns by 5 rows instead of 5 by 10, with the panel widened to fit.
+
+### Deposit All
 
 The open chest gets a **Deposit all** button under **Take all**.
 It moves everything in your inventory into the chest, except your hotbar (the top row of your inventory) and anything you have equipped, so you can empty your bags after an adventure without losing your gear.
 To keep other items too, such as your food, hold **Alt** and right-click them in your inventory.
 Marked items are also kept by **Place stacks**.
 
-## Sort
+### Sort
 
 The open chest gets a **Sort** button under **Place stacks**.
 Sorting merges partial stacks, then groups related items together, in this order: wood, stone and minerals, ores, metals, creature parts, valuables, seeds, crops, raw meat and fish, food, meads, then ammo, weapons, shields, tools, armour, utility items and trophies.
 
-## Split Stack
+### Split Stack
 
 The split stack dialog gets **-** and **+** buttons either side of the slider to change the amount by one, and so does the mouse wheel.
+These features are also available when splitting stacks in your inventory.
 
 ## Configuration
 
