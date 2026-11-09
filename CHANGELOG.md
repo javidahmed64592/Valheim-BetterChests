@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1
+
+- The wardrobe is now shown as 10 columns by 5 rows instead of 5 by 10, so all of it fits without a scroll bar. The chest panel widens to fit it.
+
 ## 0.4.0
 
 - Auto deposit now asks a chest's owner for the chest the same way opening a chest does, instead of taking it over. A chest another player has open is skipped, and two players can no longer change a chest's contents at the same time. This also works when the other player doesn't have the mod.
