@@ -6,7 +6,6 @@ using System.Reflection.Emit;
 using HarmonyLib;
 
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace BetterChests;
 
@@ -30,8 +29,6 @@ internal static class KeepItems
     internal const int HotbarRow = 0;
 
     private const string FrameName = "BetterChests_KeepFrame";
-    private const float FrameThickness = 2f;
-    private const float FrameInset = 1f;
     private static readonly Color FrameColour = new(1f, 0.76f, 0.3f, 0.95f);
 
     /// <summary>
@@ -53,42 +50,6 @@ internal static class KeepItems
         {
             item.m_customData[DataKey] = "1";
         }
-    }
-
-    /// <summary>
-    /// The frame around a slot: four thin bars, so the item stays visible inside it.
-    /// </summary>
-    private static GameObject CreateFrame(InventoryElement element)
-    {
-        GameObject frame = new(FrameName, typeof(RectTransform));
-        RectTransform rect = (RectTransform)frame.transform;
-        rect.SetParent(element.transform, false);
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = new Vector2(FrameInset, FrameInset);
-        rect.offsetMax = new Vector2(-FrameInset, -FrameInset);
-
-        AddBar(rect, "Top", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -FrameThickness), Vector2.zero);
-        AddBar(rect, "Bottom", new Vector2(0f, 0f), new Vector2(1f, 0f), Vector2.zero, new Vector2(0f, FrameThickness));
-        AddBar(rect, "Left", new Vector2(0f, 0f), new Vector2(0f, 1f), Vector2.zero, new Vector2(FrameThickness, 0f));
-        AddBar(rect, "Right", new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(-FrameThickness, 0f), Vector2.zero);
-        return frame;
-    }
-
-    private static void AddBar(RectTransform parent, string name, Vector2 anchorMin, Vector2 anchorMax, Vector2 offsetMin, Vector2 offsetMax)
-    {
-        GameObject bar = new(name, typeof(RectTransform), typeof(Image));
-        RectTransform rect = (RectTransform)bar.transform;
-        rect.SetParent(parent, false);
-        rect.anchorMin = anchorMin;
-        rect.anchorMax = anchorMax;
-        rect.offsetMin = offsetMin;
-        rect.offsetMax = offsetMax;
-
-        Image image = bar.GetComponent<Image>();
-        image.color = FrameColour;
-        // Clicks go through to the slot.
-        image.raycastTarget = false;
     }
 
     private static bool IsPlayerGrid(InventoryGrid grid)
@@ -193,19 +154,7 @@ internal static class KeepItems
             {
                 ItemDrop.ItemData item = __instance.m_inventory.GetItemAt(element.Position.x, element.Position.y);
                 bool show = item != null && IsMarked(item) && !AlwaysKept(item);
-
-                Transform frame = element.transform.Find(FrameName);
-                if (frame != null)
-                {
-                    if (frame.gameObject.activeSelf != show)
-                    {
-                        frame.gameObject.SetActive(show);
-                    }
-                }
-                else if (show)
-                {
-                    _ = CreateFrame(element);
-                }
+                SlotFrame.Show(element, FrameName, FrameColour, show);
             }
         }
     }

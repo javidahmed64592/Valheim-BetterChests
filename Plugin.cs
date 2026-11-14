@@ -19,7 +19,7 @@ public class BetterChestsPlugin : BaseUnityPlugin
 {
     public const string PluginGuid = "javidahmed64592.betterchests";
     public const string PluginName = "BetterChests";
-    public const string PluginVersion = "0.4.1";
+    public const string PluginVersion = "0.5.0";
 
     internal static ManualLogSource _log;
 
@@ -52,6 +52,7 @@ public class BetterChestsPlugin : BaseUnityPlugin
             "\"Place stacks\", or to unmark it. The left and right versions of Shift, Ctrl and Alt both work.");
 
         AutoDeposit.BindConfig(Config);
+        ChestDuplicates.BindConfig(Config);
         Translations.Load();
 
         _harmony = new Harmony(PluginGuid);

@@ -22,18 +22,11 @@ internal static class AutoDeposit
     private const float MaxSettleTime = 3f;
     private const float SettledSpeedSqr = 0.25f;
 
-    /// <summary>
-    /// The size assumed for a chest without a collider.
-    /// </summary>
-    private static readonly Vector3 FallbackChestSize = Vector3.one;
-
     private static ConfigEntry<bool> _enabled;
     private static ConfigEntry<float> _radius;
     private static ConfigEntry<float> _clusterGap;
     private static ConfigEntry<float> _throwAngle;
     private static ConfigEntry<float> _delay;
-
-    private static readonly List<Container> Containers = [];
 
     /// <summary>
     /// Set while the local player drops an item from their own inventory, so the dropped item can be watched.
@@ -63,6 +56,12 @@ internal static class AutoDeposit
                 "Seconds a dropped item lies on the ground before it is stored, so other players can pick it up. (Synced with server)",
                 new AcceptableValueRange<float>(0.5f, 10f), Synced()));
     }
+
+    /// <summary>How close in metres an item must land to a chest to be stored.</summary>
+    internal static float Radius => _radius.Value;
+
+    /// <summary>How far apart in metres (edge to edge) chests may be to count as one group.</summary>
+    internal static float ClusterGap => _clusterGap.Value;
 
     /// <summary>Settings that use the server's value when the server has the mod.</summary>
     private static ConfigurationManagerAttributes Synced()
@@ -329,12 +328,6 @@ internal static class AutoDeposit
         }
     }
 
-    private readonly struct Chest(Container container, Bounds bounds)
-    {
-        public Container Container { get; } = container;
-        public Bounds Bounds { get; } = bounds;
-    }
-
     /// <summary>
     /// The chests an item that landed at <paramref name="position"/> can go into, in the order to fill them:
     /// those that already hold it first, then the rest, each group nearest first.
@@ -345,15 +338,7 @@ internal static class AutoDeposit
     /// </summary>
     private static List<Container> GetTargets(Vector3 position, Vector3 throwFrom, Vector3 throwDir, ItemDrop.ItemData item)
     {
-        _ = Containers.RemoveAll(c => c == null);
-        List<Chest> chests = [];
-        foreach (Container container in Containers)
-        {
-            if (IsChest(container))
-            {
-                chests.Add(new Chest(container, BoundsOf(container)));
-            }
-        }
+        List<Chest> chests = ChestClusters.AllChests();
 
         // The nearest chest in the direction of the throw that the item landed close enough to.
         float maxSqr = _radius.Value * _radius.Value;
@@ -374,23 +359,7 @@ internal static class AutoDeposit
             return [];
         }
 
-        // Grow the group from that chest: any chest close enough to one already in it joins.
-        List<Chest> cluster = [chests[anchor]];
-        chests.RemoveAt(anchor);
-        float gap = _clusterGap.Value;
-        for (int i = 0; i < cluster.Count; i++)
-        {
-            Bounds reach = cluster[i].Bounds;
-            reach.Expand(gap * 2f);
-            for (int j = chests.Count - 1; j >= 0; j--)
-            {
-                if (reach.Intersects(chests[j].Bounds))
-                {
-                    cluster.Add(chests[j]);
-                    chests.RemoveAt(j);
-                }
-            }
-        }
+        List<Chest> cluster = ChestClusters.TakeCluster(chests, anchor);
 
         // Unavailable chests still link the group together, but nothing goes into them.
         _ = cluster.RemoveAll(c => !CanDepositInto(c.Container));
@@ -418,51 +387,6 @@ internal static class AutoDeposit
         return toTarget.sqrMagnitude < 0.01f || Vector3.Angle(throwDir, toTarget) <= _throwAngle.Value;
     }
 
-    private static Bounds BoundsOf(Container container)
-    {
-        bool found = false;
-        Bounds bounds = default;
-        foreach (Collider collider in container.GetComponentsInChildren<Collider>())
-        {
-            if (!collider.enabled || collider.isTrigger)
-            {
-                continue;
-            }
-
-            if (found)
-            {
-                bounds.Encapsulate(collider.bounds);
-            }
-            else
-            {
-                bounds = collider.bounds;
-                found = true;
-            }
-        }
-
-        return found
-            ? bounds
-            : new Bounds(container.transform.position + (Vector3.up * (FallbackChestSize.y / 2f)), FallbackChestSize);
-    }
-
-    /// <summary>
-    /// Player-built chests: not carts, tombstones or containers that vanish when emptied.
-    /// </summary>
-    private static bool IsChest(Container container)
-    {
-        if (container.GetInventory() == null
-            || container.m_wagon != null
-            || container.m_autoDestroyEmpty
-            || container.GetComponent<TombStone>() != null
-            || container.GetComponent<Piece>() == null)
-        {
-            return false;
-        }
-
-        ZNetView nview = container.m_nview;
-        return nview != null && nview.IsValid();
-    }
-
     /// <summary>
     /// Only chests that the player could open normally and that nobody else is using.
     /// </summary>
@@ -471,9 +395,7 @@ internal static class AutoDeposit
         // The chest we have open ourselves is fine; one someone else has open is not.
         bool openHere = InventoryGui.instance != null && InventoryGui.instance.m_currentContainer == container;
         bool free = openHere || (!container.IsInUse() && container.m_nview.GetZDO().GetInt(ZDOVars.s_inUse) != 1);
-        bool allowed = container.CheckAccess(Game.instance.GetPlayerProfile().GetPlayerID());
-        bool warded = container.m_checkGuardStone && !PrivateArea.CheckAccess(container.transform.position, 0f, false);
-        return free && allowed && !warded;
+        return free && ChestClusters.CanAccess(container);
     }
 
     /// <summary>
@@ -584,19 +506,6 @@ internal static class AutoDeposit
             if (!hold && Awaiting.ContainsKey(__instance))
             {
                 _ = OpenedByPlayer.Add(__instance);
-            }
-        }
-    }
-
-    [HarmonyPatch(typeof(Container), "Awake")]
-    private static class Container_Awake_Patch
-    {
-        [HarmonyPostfix]
-        private static void Postfix(Container __instance)
-        {
-            if (__instance.GetInventory() != null && !Containers.Contains(__instance))
-            {
-                Containers.Add(__instance);
             }
         }
     }

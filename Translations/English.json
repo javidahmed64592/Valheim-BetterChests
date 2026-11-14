@@ -7,5 +7,9 @@
   "betterchests_hint_keep": "Keep when depositing",
   "betterchests_mouse_wheel": "Mouse wheel",
   "betterchests_stored": "Stored $1 in $2",
-  "betterchests_always_kept": "Hotbar and equipped items are never deposited"
+  "betterchests_always_kept": "Hotbar and equipped items are never deposited",
+  "betterchests_also_in_group_one": "Also in 1 other chest in this group: $1",
+  "betterchests_also_in_group": "Also in $1 other chests in this group: $2",
+  "betterchests_in_nearby_one": "In 1 nearby chest: $1",
+  "betterchests_in_nearby": "In $1 nearby chests: $2"
 }

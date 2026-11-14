@@ -47,6 +47,13 @@ Marked items are also kept by **Place stacks**.
 The open chest gets a **Sort** button under **Place stacks**.
 Sorting merges partial stacks, then groups related items together, in this order: wood, stone and minerals, ores, metals, creature parts, valuables, seeds, crops, raw meat and fish, food, meads, then ammo, weapons, shields, tools, armour, utility items and trophies.
 
+### Duplicates
+
+Items in the open chest that another chest in its group also holds get a blue frame, so you can see what could be gathered into one chest.
+Hovering over an item in the chest makes the other chests in the group that hold it glow, and its tooltip says how many of them there are and how much they hold.
+Hovering over an item in your inventory does the same for every chest in the groups within auto deposit range of you, so you know where to take it.
+Nothing is moved for you, so you decide where everything goes.
+
 ### Split Stack
 
 The split stack dialog gets **-** and **+** buttons either side of the slider to change the amount by one, and so does the mouse wheel.
