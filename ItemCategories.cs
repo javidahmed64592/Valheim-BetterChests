@@ -88,7 +88,7 @@ internal static class ItemCategories
 
     private static Dictionary<string, (Category, int)> BuildKnown()
     {
-        Dictionary<string, (Category, int)> known = new(StringComparer.Ordinal);
+        Dictionary<string, (Category, int)> known = []; // string keys compare ordinally by default
         foreach ((Category category, string[] prefabs) in Known)
         {
             for (int i = 0; i < prefabs.Length; i++)
