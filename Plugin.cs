@@ -2,6 +2,10 @@ using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 
+using BetterChests.Core;
+using BetterChests.Deposit;
+using BetterChests.Duplicates;
+
 using HarmonyLib;
 
 using Jotunn.Configs;

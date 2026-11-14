@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace BetterChests;
+namespace BetterChests.Sorting;
 
 /// <summary>
 /// Groups items the way players think of them (wood, ores, seeds, food and so on), for sorting. Vanilla

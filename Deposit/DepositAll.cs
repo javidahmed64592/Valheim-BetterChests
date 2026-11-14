@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 using UnityEngine;
 
-namespace BetterChests;
+namespace BetterChests.Deposit;
 
 /// <summary>
 /// The opposite of "Take all": moves everything from the player's inventory into the open chest, except

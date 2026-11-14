@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace BetterChests;
+namespace BetterChests.Deposit;
 
 /// <summary>
 /// The look of an auto deposited item: a copy of it is pulled from where the item lay into the chest it

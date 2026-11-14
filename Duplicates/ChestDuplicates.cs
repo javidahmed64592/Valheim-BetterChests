@@ -5,11 +5,15 @@ using System.Reflection.Emit;
 
 using BepInEx.Configuration;
 
+using BetterChests.Core;
+using BetterChests.Deposit;
+using BetterChests.UI;
+
 using HarmonyLib;
 
 using UnityEngine;
 
-namespace BetterChests;
+namespace BetterChests.Duplicates;
 
 /// <summary>
 /// <para>

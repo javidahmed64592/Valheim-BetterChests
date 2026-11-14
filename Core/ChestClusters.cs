@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 
+using BetterChests.Deposit;
+
 using HarmonyLib;
 
 using UnityEngine;
 
-namespace BetterChests;
+namespace BetterChests.Core;
 
 /// <summary>
 /// A chest and the space it takes up in the world.

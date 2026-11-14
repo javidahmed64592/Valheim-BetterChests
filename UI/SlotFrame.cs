@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BetterChests;
+namespace BetterChests.UI;
 
 /// <summary>
 /// A coloured frame around an inventory slot: four thin bars, so the item stays visible inside it.

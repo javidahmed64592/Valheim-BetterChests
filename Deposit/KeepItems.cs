@@ -3,11 +3,13 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
+using BetterChests.UI;
+
 using HarmonyLib;
 
 using UnityEngine;
 
-namespace BetterChests;
+namespace BetterChests.Deposit;
 
 /// <summary>
 /// <para>

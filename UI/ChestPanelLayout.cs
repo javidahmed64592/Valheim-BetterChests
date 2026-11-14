@@ -5,7 +5,7 @@ using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BetterChests;
+namespace BetterChests.UI;
 
 /// <summary>
 /// Makes room in the chest panel for the buttons added under "Take all" and "Place stacks", and makes the panel taller so

@@ -2,11 +2,13 @@ using System.Collections.Generic;
 
 using BepInEx.Configuration;
 
+using BetterChests.Core;
+
 using HarmonyLib;
 
 using UnityEngine;
 
-namespace BetterChests;
+namespace BetterChests.Deposit;
 
 /// <summary>
 /// Items the player drops near chests are stored in them. The item is dropped as normal first and lies on
