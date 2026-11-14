@@ -52,7 +52,6 @@ Sorting merges partial stacks, then groups related items together, in this order
 Items in the open chest that another chest in its group also holds get a blue frame, so you can see what could be gathered into one chest.
 Hovering over an item in the chest makes the other chests in the group that hold it glow, and its tooltip says how many of them there are and how much they hold.
 Hovering over an item in your inventory does the same for every chest in the groups within auto deposit range of you, so you know where to take it.
-Nothing is moved for you, so you decide where everything goes.
 
 ### Split Stack
 
