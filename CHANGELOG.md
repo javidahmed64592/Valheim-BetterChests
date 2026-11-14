@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0
+
+- Items in an open chest that another chest in its group also holds get a blue frame, so you can spot items worth gathering into one chest.
+- Hovering over an item in the open chest makes the other chests in its group that hold it glow, and its tooltip says how many of them there are and how much they hold.
+- Hovering over an item in your inventory does the same for every chest in the groups within auto deposit range of you, whether or not a chest is open.
+- Other players' private chests and chests in someone else's ward are never counted. Nothing is moved for you.
+- Added the `Show Duplicates` setting to turn this off.
+- Moved the source files into feature folders (`Core`, `Deposit`, `Duplicates`, `Sorting`, `UI`). No change in behaviour.
 ## 0.4.1
 
 - The wardrobe is now shown as 10 columns by 5 rows instead of 5 by 10, so all of it fits without a scroll bar. The chest panel widens to fit it.

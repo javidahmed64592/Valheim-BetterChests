@@ -1,5 +1,8 @@
 using System.Linq;
 
+using BetterChests.Deposit;
+using BetterChests.Sorting;
+
 using HarmonyLib;
 
 using TMPro;
@@ -8,7 +11,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-namespace BetterChests;
+namespace BetterChests.UI;
 
 /// <summary>
 /// The chest panel's extra buttons, "Deposit all" under "Take all" and "Sort" under "Place stacks", and

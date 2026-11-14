@@ -5,7 +5,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BetterChests;
+namespace BetterChests.UI;
 
 /// <summary>
 /// Adds "-" and "+" buttons either side of the split stack slider, and lets the mouse wheel do the same.

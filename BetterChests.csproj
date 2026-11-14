@@ -4,7 +4,7 @@
     <TargetFramework>net472</TargetFramework>
     <AssemblyName>BetterChests</AssemblyName>
     <Description>Enhances chests with additional features like sorting and auto-depositing!</Description>
-    <Version>0.4.1</Version>
+    <Version>0.5.0</Version>
     <LangVersion>latest</LangVersion>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>

@@ -8,7 +8,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BetterChests;
+namespace BetterChests.UI;
 
 /// <summary>
 /// Adds this mod's keys to the vanilla inventory key hints (bottom of the screen while the inventory is

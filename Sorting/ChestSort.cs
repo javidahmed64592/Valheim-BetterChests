@@ -3,7 +3,7 @@ using System.Linq;
 
 using UnityEngine;
 
-namespace BetterChests;
+namespace BetterChests.Sorting;
 
 /// <summary>
 /// Sorting the open chest (from the "Sort" button or key, see <see cref="ChestButtons"/>). Partial
