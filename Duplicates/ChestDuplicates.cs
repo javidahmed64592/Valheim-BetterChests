@@ -5,6 +5,7 @@ using BepInEx.Configuration;
 
 using BetterChests.Core;
 using BetterChests.Deposit;
+using BetterChests.Search;
 using BetterChests.UI;
 
 using UnityEngine;
@@ -285,7 +286,8 @@ internal static class ChestDuplicates
             return;
         }
 
-        bool enabled = _enabled.Value;
+        // Search results come from the whole group, so every one of them would be framed.
+        bool enabled = _enabled.Value && !ChestSearch.Active;
         if (enabled)
         {
             Refresh(gui);

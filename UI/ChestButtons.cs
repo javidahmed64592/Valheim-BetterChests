@@ -2,6 +2,7 @@ using System.Linq;
 
 using BetterChests.Deposit;
 using BetterChests.Restock;
+using BetterChests.Search;
 using BetterChests.Sorting;
 
 using TMPro;
@@ -73,6 +74,7 @@ internal static class ChestButtons
             () => ChestRestock.Restock(gui.m_currentContainer, Player.m_localPlayer));
         ChestPanelLayout.Setup(gui,
             [.. new[] { gui.m_takeAllButton, restock, depositAll, gui.m_stackAllButton, sort }.Where(b => b != null)]);
+        ChestSearch.Create();
     }
 
     /// <summary>

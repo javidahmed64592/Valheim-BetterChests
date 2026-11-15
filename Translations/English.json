@@ -16,5 +16,7 @@
   "betterchests_restocked": "Restocked $1 items",
   "betterchests_restock_nothing": "Nothing to restock from these chests",
   "betterchests_restock_full": "Nothing to restock: you carry no partial stacks",
-  "betterchests_restock_skipped": "$1 chests in use were skipped"
+  "betterchests_restock_skipped": "$1 chests in use were skipped",
+  "betterchests_search_placeholder": "Search this chest group",
+  "betterchests_search_results": "Search results"
 }

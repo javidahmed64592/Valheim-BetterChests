@@ -1,0 +1,15 @@
+using BetterChests.Search;
+
+using HarmonyLib;
+
+namespace BetterChests.Patches;
+
+/// <summary>While searching, a click on the chest grid takes the item from the chest it is really in.</summary>
+[HarmonyPatch(typeof(InventoryGui), "OnSelectedItem")]
+internal static class InventoryGui_OnSelectedItem_Patch
+{
+    private static bool Prefix(InventoryGui __instance, InventoryGrid grid, ItemDrop.ItemData item)
+    {
+        return !ChestSearch.TryHandleClick(__instance, grid, item);
+    }
+}

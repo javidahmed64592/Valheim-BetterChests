@@ -6,6 +6,7 @@ using BetterChests.Core;
 using BetterChests.Deposit;
 using BetterChests.Duplicates;
 using BetterChests.Keys;
+using BetterChests.Search;
 using BetterChests.Sorting;
 
 using HarmonyLib;
@@ -96,7 +97,8 @@ public class BetterChestsPlugin : BaseUnityPlugin
     /// </summary>
     internal static bool TextInputActive()
     {
-        return (Chat.instance != null && Chat.instance.HasFocus())
+        return ChestSearch.Focused
+            || (Chat.instance != null && Chat.instance.HasFocus())
             || Console.IsVisible()
             || TextInput.IsVisible();
     }

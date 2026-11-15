@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Search a chest group.** Type in the new search bar at the top right of the chest panel: the grid shows every item whose name matches from the open chest and every chest grouped with it, as if they were one chest, in sort order. Click an item to take that stack into your inventory from the chest it is really in (a chest another player has open says it's in use). While you type, your keys don't close the inventory or use hotbar items. Closing the chest, or opening another, empties the search.
 - The chest panel has a new layout: the chest's name at the top left, and all five buttons in one row under it, grouped by what they do: **Take all** and **Restock** (into your inventory), **Deposit all** and **Place stacks** (into the chest), then **Sort**. Restock now has a button too. Button labels shrink to fit on narrow chests.
 - Press **Y** at a chest (open, or just looking at it) to **restock**: every partial stack you carry, the hotbar included, is topped up from that chest and every chest grouped with it. Chests another player has open are skipped, and a message says how many items came in. The key can be changed with the new `Restock` keybind, and the chest's hover text and key hints show it.
 - **Sorting is smarter**, especially for food and Deep North items:
