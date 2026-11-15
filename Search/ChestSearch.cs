@@ -23,6 +23,9 @@ internal static class ChestSearch
 {
     private const float RefreshInterval = 1f;
 
+    /// <summary>Space between the search bar's edges and its text.</summary>
+    private static readonly Vector2 TextPadding = new(8f, 2f);
+
     private static InputField _field;
     private static Inventory _view;
     private static float _nextRefresh;
@@ -56,6 +59,23 @@ internal static class ChestSearch
 
         _field = field.GetComponent<InputField>();
         _field.characterLimit = 40;
+
+        // Unity's input field insets its text by 6-7 pixels top and bottom, leaving less than a line of text in the
+        // title row; legacy text that doesn't fit draws nothing, so neither the placeholder nor the typing showed.
+        foreach (Text text in new[] { _field.textComponent, _field.placeholder as Text })
+        {
+            if (text == null)
+            {
+                continue;
+            }
+            RectTransform textRect = text.rectTransform;
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.offsetMin = TextPadding;
+            textRect.offsetMax = -TextPadding;
+            text.verticalOverflow = VerticalWrapMode.Overflow;
+            text.alignment = TextAnchor.MiddleLeft;
+        }
         _field.onValueChanged.AddListener(_ => _nextRefresh = 0f);
     }
 
