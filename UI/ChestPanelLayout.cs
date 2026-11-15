@@ -60,13 +60,13 @@ internal static class ChestPanelLayout
     private const float SidePadding = 12f;
 
     /// <summary>The middle of the title row, from the panel's top (where vanilla has the title).</summary>
-    private const float TitleRowY = 20f;
+    private const float TitleRowY = 22f;
 
     /// <summary>The height of the title's box: room for vanilla's title font on one line.</summary>
     private const float TitleHeight = 32f;
 
     /// <summary>The button row: its top, from the panel's top, and its height.</summary>
-    private const float ButtonRowTop = 38f;
+    private const float ButtonRowTop = 48f;
     private const float ButtonRowHeight = 40f;
 
     /// <summary>The smallest a button label shrinks to, to fit five buttons on a narrow chest.</summary>
