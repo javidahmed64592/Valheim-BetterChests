@@ -91,6 +91,29 @@ internal static class ChestClusters
     }
 
     /// <summary>
+    /// The chest and every loaded chest grouped with it that the player may use (see <see cref="CanAccess"/>).
+    /// </summary>
+    internal static List<Container> GroupOf(Container container)
+    {
+        List<Chest> pool = AllChests();
+        int anchor = pool.FindIndex(c => c.Container == container);
+        if (anchor < 0)
+        {
+            return [container];
+        }
+
+        List<Container> group = [];
+        foreach (Chest chest in TakeCluster(pool, anchor))
+        {
+            if (chest.Container == container || CanAccess(chest.Container))
+            {
+                group.Add(chest.Container);
+            }
+        }
+        return group;
+    }
+
+    /// <summary>
     /// Whether the player may look in the chest: not another player's private chest, nor one inside
     /// someone else's ward. Someone else having it open doesn't matter.
     /// </summary>

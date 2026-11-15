@@ -46,6 +46,7 @@ internal static class KeyHintUI
         new HintDef { Label = "$betterchests_hint_place_stacks", Key = () => BetterChestsPlugin._placeStacksKey, Visibility = HintVisibility.ContainerOnly },
         new HintDef { Label = "$betterchests_deposit_all", Key = () => BetterChestsPlugin._depositAllKey, Visibility = HintVisibility.ContainerOnly },
         new HintDef { Label = "$betterchests_sort", Key = () => BetterChestsPlugin._sortKey, Visibility = HintVisibility.ContainerOnly },
+        new HintDef { Label = "$betterchests_hint_restock", Key = () => BetterChestsPlugin._restockKey, Visibility = HintVisibility.ContainerOnly },
         new HintDef { Label = "$betterchests_hint_split", Scroll = true, Visibility = HintVisibility.SplitDialogOnly },
         new HintDef
         {

@@ -33,6 +33,7 @@ public class BetterChestsPlugin : BaseUnityPlugin
     internal static Keybind _placeStacksKey;
     internal static Keybind _depositAllKey;
     internal static Keybind _sortKey;
+    internal static Keybind _restockKey;
     internal static Keybind _keepItemKey;
 
     private Harmony _harmony;
@@ -53,6 +54,9 @@ public class BetterChestsPlugin : BaseUnityPlugin
             "equipped items (the same as the \"Deposit all\" button).");
         _sortKey = BindKey("Sort", "Sort", KeyCode.G,
             "While a chest is open, or while looking at one, sorts its contents (the same as the \"Sort\" button).");
+        _restockKey = BindKey("Restock", "Restock", KeyCode.Y,
+            "While a chest is open, or while looking at one, tops up every partial stack you carry (the hotbar included) " +
+            "from that chest and every chest grouped with it.");
         _keepItemKey = BindKey("Keep Item", "KeepItem", KeyCode.LeftAlt,
             "Hold and right-click an item in your inventory to mark it to be kept by \"Deposit all\" and " +
             "\"Place stacks\", or to unmark it. The left and right versions of Shift, Ctrl and Alt both work.");

@@ -16,6 +16,7 @@ Enhances chests with additional features like sorting and auto-depositing!
 | `T`                 | Place stacks: move items, except your hotbar, equipped and marked items, onto matching stacks in the chest. |
 | `F`                 | Deposit all: move everything except your hotbar, equipped and marked items into the chest.                  |
 | `G`                 | Sort the chest.                                                                                             |
+| `Y`                 | Restock: top up every partial stack you carry from the chest and every chest grouped with it.               |
 | `Alt` + Right-click | Mark or unmark an item in your inventory to keep it when depositing all or placing stacks.                  |
 | Mouse wheel         | Change the amount by one when splitting a stack (Shift+click).                                              |
 
@@ -80,7 +81,7 @@ Settings marked "(Synced with server)" use the server's values when the server h
 
 ## Compatibility
 
-- Other chest mods that add sorting, quick stacking or auto storing (such as Quick Stack - Store - Sort - Trash - Restock) overlap with this mod. Their keys may clash with `R`, `T`, `F` and `G` (all can be changed in the config file), and their buttons may overlap on the chest panel.
+- Other chest mods that add sorting, quick stacking or auto storing (such as Quick Stack - Store - Sort - Trash - Restock) overlap with this mod. Their keys may clash with `R`, `T`, `F`, `G` and `Y` (all can be changed in the config file), and their buttons may overlap on the chest panel.
 - This mod has not been tested with a gamepad, only with keyboard and mouse.
 
 ## Uninstalling
