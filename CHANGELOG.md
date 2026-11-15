@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The chest panel has a new layout: the chest's name at the top left, and all five buttons in one row under it, grouped by what they do: **Take all** and **Restock** (into your inventory), **Deposit all** and **Place stacks** (into the chest), then **Sort**. Restock now has a button too. Button labels shrink to fit on narrow chests.
 - Press **Y** at a chest (open, or just looking at it) to **restock**: every partial stack you carry, the hotbar included, is topped up from that chest and every chest grouped with it. Chests another player has open are skipped, and a message says how many items came in. The key can be changed with the new `Restock` keybind, and the chest's hover text and key hints show it.
 - **Sorting is smarter**, especially for food and Deep North items:
   - Crops picked from plants, wild or grown (berries, mushrooms, carrots, turnips, barley…), are ordered by tier, from the earliest biome to the latest, whether you can eat them or not.
