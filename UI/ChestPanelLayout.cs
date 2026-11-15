@@ -62,6 +62,9 @@ internal static class ChestPanelLayout
     /// <summary>The middle of the title row, from the panel's top (where vanilla has the title).</summary>
     private const float TitleRowY = 20f;
 
+    /// <summary>The height of the title's box: room for vanilla's title font on one line.</summary>
+    private const float TitleHeight = 32f;
+
     /// <summary>The button row: its top, from the panel's top, and its height.</summary>
     private const float ButtonRowTop = 38f;
     private const float ButtonRowHeight = 40f;
@@ -104,11 +107,13 @@ internal static class ChestPanelLayout
         title.anchorMin = new Vector2(0f, 1f);
         title.anchorMax = new Vector2(0.5f, 1f);
         title.pivot = new Vector2(0f, 0.5f);
-        float titleHeight = title.rect.height;
+        // Vanilla's box is shorter than the title's line height and relies on the text overflowing it; a taller box
+        // keeps the name inside it.
+        float titleHeight = Mathf.Max(title.rect.height, TitleHeight);
         title.offsetMin = new Vector2(SidePadding, -TitleRowY - (titleHeight / 2f));
         title.offsetMax = new Vector2(0f, -TitleRowY + (titleHeight / 2f));
         gui.m_containerName.alignment = TextAlignmentOptions.MidlineLeft;
-        gui.m_containerName.overflowMode = TextOverflowModes.Ellipsis;
+        gui.m_containerName.textWrappingMode = TextWrappingModes.NoWrap;
 
         GameObject titleRow = new("BetterChests_TitleRow", typeof(RectTransform));
         titleRow.transform.SetParent(_panel, false);
