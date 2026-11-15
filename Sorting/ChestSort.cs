@@ -42,9 +42,8 @@ internal static class ChestSort
         MergeStacks(items);
 
         List<ItemDrop.ItemData> sorted = [.. items
-            .Select(i => (Item: i, Key: ItemCategories.SortKey(i)))
-            .OrderBy(e => e.Key.Group)
-            .ThenBy(e => e.Key.Index)
+            .Select(i => (Item: i, Key: ItemCategories.KeyOf(i)))
+            .OrderBy(e => e.Key)
             .ThenBy(e => Localization.instance.Localize(e.Item.m_shared.m_name), System.StringComparer.CurrentCultureIgnoreCase)
             .ThenBy(e => e.Item.m_shared.m_name, System.StringComparer.Ordinal)
             .ThenByDescending(e => e.Item.m_quality)

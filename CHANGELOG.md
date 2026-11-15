@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- **Sorting is smarter**, especially for food and Deep North items:
+  - Crops picked from plants, wild or grown (berries, mushrooms, carrots, turnips, barley…), are ordered by tier, from the earliest biome to the latest, whether you can eat them or not.
+  - Cooked food is ordered by the stat it raises most, in four sections (health, balanced health and stamina, stamina, eitr), lowest first.
+  - Armour is grouped by set, then helmet, chest and legs, also for sets the game doesn't name (such as the mage sets). Weapons are grouped by class, one-handed before two-handed.
+  - Moulds and casts get their own group, ordered like the gear they make: armour sets first, then weapons (staffs included), then shields.
+  - Upgrade kits get their own group: armour kits by tier, then weapon kits by tier.
+  - Meads (anything a fermenter makes) are grouped by what they do: health, stamina, eitr, each resistance (fire, frost, poison…), then the rest. Within each group they go by tier, so minor comes before medium, major and lingering. Mead bases come first, in the same order. Other consumables (boss hearts, toadstools, rotten meat…) have their own group after the meads.
+  - Metal bars and metal parts (nails, chains, springs) are separate groups, so all bars sit together and all nails sit together.
+  - Hides get their own group, by tier. Jute and linen thread moved out of the metals.
+  - Items the mod doesn't list (Deep North items and other mods' items) are placed by tier, worked out from the game's own data: the earliest biome a creature, tree, rock or plant gives it in, carried through recipes, smelting and cooking. A crafted item is never earlier than the station that makes it (so anything made at a Black Forge is Mistlands or later). Before, they all went to the end of their group by name.
+  - New console command `betterchests_sortinfo` writes every item's place in the sort order to the BepInEx log.
 - Fixed **Place stacks** (the button, its key and holding use on a chest) moving items from your hotbar into the chest, such as a mead in the hotbar when the chest holds meads, even though marking a hotbar item says hotbar items are never deposited. Place stacks now keeps the same items as Deposit all: your hotbar, anything equipped, and marked items.
 - The chest keys (**R** take all, **T** place stacks, **F** deposit all, **G** sort) also work while looking at a chest, without opening it, and the chest's hover text shows them. They work on the same chests as opening them: not other players' private chests, chests in someone else's ward, or a chest another player has open. While they act on a chest, the key doesn't also do what the game binds it to (**F** is the Forsaken power, **R** hides your weapons) or what other mods bound to it through the game's controls. They can be turned off in the new `Chest Keys` config section, which also hides the hover text hints.
 - Moved the Harmony patches out of the feature classes into a `Patches` folder, one file per patched game method, like the other mods. No behaviour change.
