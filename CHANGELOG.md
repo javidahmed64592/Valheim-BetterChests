@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- **Sorting is smarter**, especially for food and Deep North items:
+  - Food (now including raw berries, mushrooms and honey) is ordered by the stat it raises most, health then stamina then eitr, lowest first.
+  - Armour is grouped by set, then by slot. Weapons are grouped by class, one-handed before two-handed.
+  - Moulds and casts get their own group, each next to the other parts for the same gear, in the gear's order.
+  - Upgrade kits get their own group: armour kits by tier, then weapon kits by tier.
+  - Metal bars and metal parts (nails, chains, springs) are separate groups, so all bars sit together and all nails sit together.
+  - Hides get their own group, by tier. Jute and linen thread moved out of the metals.
+  - Items the mod doesn't list (Deep North items and other mods' items) are placed by tier, worked out from the game's own data: the earliest biome a creature, tree, rock or plant gives it in, carried through recipes, smelting and cooking. Before, they all went to the end of their group by name.
+  - New console command `betterchests_sortinfo` writes every item's place in the sort order to the BepInEx log.
 - The chest keys (**R** take all, **T** place stacks, **F** deposit all, **G** sort) also work while looking at a chest, without opening it, and the chest's hover text shows them. They work on the same chests as opening them: not other players' private chests, chests in someone else's ward, or a chest another player has open. While they act on a chest, the key doesn't also do what the game binds it to (**F** is the Forsaken power, **R** hides your weapons) or what other mods bound to it through the game's controls. They can be turned off in the new `Chest Keys` config section, which also hides the hover text hints.
 - Moved the Harmony patches out of the feature classes into a `Patches` folder, one file per patched game method, like the other mods. No behaviour change.
 

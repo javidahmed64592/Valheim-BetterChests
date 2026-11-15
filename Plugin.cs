@@ -6,6 +6,7 @@ using BetterChests.Core;
 using BetterChests.Deposit;
 using BetterChests.Duplicates;
 using BetterChests.Keys;
+using BetterChests.Sorting;
 
 using HarmonyLib;
 
@@ -60,6 +61,7 @@ public class BetterChestsPlugin : BaseUnityPlugin
         ChestDuplicates.BindConfig(Config);
         ChestKeys.BindConfig(Config);
         Translations.Load();
+        CommandManager.Instance.AddConsoleCommand(new SortInfoCommand());
 
         _harmony = new Harmony(PluginGuid);
         _harmony.PatchAll();
