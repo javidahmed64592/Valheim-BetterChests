@@ -26,23 +26,17 @@ internal static class ItemTiers
 
     private static ObjectDB _builtFor;
     private static readonly Dictionary<string, int> Tiers = [];
-    private static readonly Dictionary<string, int> SetTiers = [];
     private static readonly Dictionary<string, ItemDrop> GearFor = [];
     private static readonly Dictionary<string, ItemDrop> ConsumableFor = [];
     private static readonly HashSet<string> RawFoods = [];
+    private static readonly HashSet<string> Harvested = [];
+    private static readonly Dictionary<string, int> ArmourFamilyTiers = [];
 
     /// <summary>The item's tier (1 = Meadows … 8 = Deep North), or <see cref="Unknown"/>.</summary>
     internal static int Of(string prefab)
     {
         Build();
         return prefab != null && Tiers.TryGetValue(prefab, out int tier) ? tier : Unknown;
-    }
-
-    /// <summary>The lowest tier among the pieces of an armour set, so every piece of the set sorts together.</summary>
-    internal static int OfSet(string setName)
-    {
-        Build();
-        return !string.IsNullOrEmpty(setName) && SetTiers.TryGetValue(setName, out int tier) ? tier : Unknown;
     }
 
     /// <summary>The weapon, shield or armour piece this part (a mould or a cast) ends up as, if it is used for one.</summary>
@@ -57,6 +51,22 @@ internal static class ItemTiers
     {
         Build();
         return prefab != null && ConsumableFor.TryGetValue(prefab, out ItemDrop consumable) ? consumable : null;
+    }
+
+    /// <summary>
+    /// True for something picked from a plant, wild or grown from a seed (berries, mushrooms, carrots, barley…).
+    /// </summary>
+    internal static bool IsHarvested(string prefab)
+    {
+        Build();
+        return prefab != null && Harvested.Contains(prefab);
+    }
+
+    /// <summary>The lowest tier among an armour set's pieces (see <see cref="ItemCategories.ArmourFamily"/>).</summary>
+    internal static int OfArmourFamily(string family)
+    {
+        Build();
+        return family != null && ArmourFamilyTiers.TryGetValue(family, out int tier) ? tier : Unknown;
     }
 
     /// <summary>
@@ -98,10 +108,11 @@ internal static class ItemTiers
 
         _builtFor = db;
         Tiers.Clear();
-        SetTiers.Clear();
         GearFor.Clear();
         ConsumableFor.Clear();
         RawFoods.Clear();
+        Harvested.Clear();
+        ArmourFamilyTiers.Clear();
 
         AddCreatureSources();
         AddVegetationSources();
@@ -157,6 +168,10 @@ internal static class ItemTiers
             if (prefab.TryGetComponent(out Fermenter fermenter))
             {
                 AddConversions(makes, fermenter.m_conversion, c => (c.m_from, c.m_to));
+            }
+            if (prefab.TryGetComponent(out Plant plant) && prefab.TryGetComponent(out Piece planted))
+            {
+                AddCrops(makes, plant, planted);
             }
         }
 
@@ -215,11 +230,11 @@ internal static class ItemTiers
                 continue;
             }
 
-            string setName = item.m_itemData.m_shared.m_setName;
-            if (!string.IsNullOrEmpty(setName) && Tiers.TryGetValue(item.name, out int tier)
-                && (!SetTiers.TryGetValue(setName, out int setTier) || tier < setTier))
+            string family = ItemCategories.ArmourFamily(item.m_itemData.m_shared, item.name);
+            if (family != null && Tiers.TryGetValue(item.name, out int pieceTier)
+                && (!ArmourFamilyTiers.TryGetValue(family, out int familyTier) || pieceTier < familyTier))
             {
-                SetTiers[setName] = tier;
+                ArmourFamilyTiers[family] = pieceTier;
             }
 
             FollowChain(item.name, madeInto);
@@ -245,37 +260,82 @@ internal static class ItemTiers
     }
 
     /// <summary>
-    /// Follows an item through what it is made into, while it only makes one thing, until it becomes a weapon, shield,
-    /// armour piece, food or mead.
+    /// Records the one piece of gear (or else the one food or mead) that everything this item is made into ends up as.
+    /// A mould makes a cast, which is fired into a sword, and the same mould also makes the sword directly with an
+    /// upgrade kit: both lead to the same sword, so the mould is for that sword. A bar of gold makes many things, so it
+    /// is for none.
     /// </summary>
     private static void FollowChain(string prefab, Dictionary<string, HashSet<ItemDrop>> madeInto)
     {
-        string current = prefab;
-        for (int step = 0; step < MaxChain; step++)
+        ItemDrop gear = EndsAs(prefab, madeInto, 0, wantGear: true);
+        if (gear != null)
         {
-            if (!madeInto.TryGetValue(current, out HashSet<ItemDrop> outputs) || outputs.Count != 1)
-            {
-                return;
-            }
+            GearFor[prefab] = gear;
+            return;
+        }
 
-            ItemDrop output = null;
-            foreach (ItemDrop single in outputs)
-            {
-                output = single;
-            }
+        ItemDrop consumable = EndsAs(prefab, madeInto, 0, wantGear: false);
+        if (consumable != null)
+        {
+            ConsumableFor[prefab] = consumable;
+        }
+    }
 
-            ItemDrop.ItemData.SharedData shared = output.m_itemData.m_shared;
-            if (ItemCategories.IsGear(shared.m_itemType))
+    /// <summary>The single gear piece (or consumable) all of this item's uses end up as, or null if none or several.</summary>
+    private static ItemDrop EndsAs(string prefab, Dictionary<string, HashSet<ItemDrop>> madeInto, int depth, bool wantGear)
+    {
+        if (depth >= MaxChain || !madeInto.TryGetValue(prefab, out HashSet<ItemDrop> outputs))
+        {
+            return null;
+        }
+
+        ItemDrop found = null;
+        foreach (ItemDrop output in outputs)
+        {
+            ItemDrop.ItemData.ItemType type = output.m_itemData.m_shared.m_itemType;
+            bool isEnd = wantGear ? ItemCategories.IsGear(type) : type == ItemDrop.ItemData.ItemType.Consumable;
+            ItemDrop end = isEnd ? output : EndsAs(output.name, madeInto, depth + 1, wantGear);
+            if (end == null)
             {
-                GearFor[prefab] = output;
-                return;
+                continue; // a use that leads nowhere in particular (say, a by-product) doesn't decide it
             }
-            if (shared.m_itemType == ItemDrop.ItemData.ItemType.Consumable)
+            if (found != null && found.name != end.name)
             {
-                ConsumableFor[prefab] = output;
-                return;
+                return null;
             }
-            current = output.name;
+            found = end;
+        }
+        return found;
+    }
+
+    /// <summary>
+    /// A planted crop gives what it grows into; its tier is its seed's, since a crop like carrots only grows from
+    /// seeds and is never found wild.
+    /// </summary>
+    private static void AddCrops(List<(List<string>, ItemDrop)> makes, Plant plant, Piece planted)
+    {
+        List<string> seeds = [];
+        foreach (Piece.Requirement requirement in planted.m_resources)
+        {
+            if (requirement?.m_resItem != null)
+            {
+                seeds.Add(requirement.m_resItem.name);
+            }
+        }
+        if (seeds.Count == 0 || plant.m_grownPrefabs == null)
+        {
+            return;
+        }
+
+        foreach (GameObject grown in plant.m_grownPrefabs)
+        {
+            Pickable pickable = grown != null ? grown.GetComponent<Pickable>() : null;
+            ItemDrop crop = pickable != null && pickable.m_itemPrefab != null ? pickable.m_itemPrefab.GetComponent<ItemDrop>() : null;
+            if (crop != null)
+            {
+                makes.Add((seeds, crop));
+                _ = Harvested.Add(crop.name);
+            }
         }
     }
 
@@ -356,6 +416,10 @@ internal static class ItemTiers
         {
             AddItem(pickable.m_itemPrefab, tier);
             AddTable(pickable.m_extraDrops, tier);
+            if (pickable.m_itemPrefab != null)
+            {
+                _ = Harvested.Add(pickable.m_itemPrefab.name);
+            }
         }
         foreach (PickableItem pickable in prefab.GetComponentsInChildren<PickableItem>(true))
         {

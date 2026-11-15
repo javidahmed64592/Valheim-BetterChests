@@ -3,9 +3,10 @@
 ## Unreleased
 
 - **Sorting is smarter**, especially for food and Deep North items:
-  - Food (now including raw berries, mushrooms and honey) is ordered by the stat it raises most, health then stamina then eitr, lowest first.
-  - Armour is grouped by set, then by slot. Weapons are grouped by class, one-handed before two-handed.
-  - Moulds and casts get their own group, each next to the other parts for the same gear, in the gear's order.
+  - Crops picked from plants, wild or grown (berries, mushrooms, carrots, turnips, barley…), are ordered by tier, from the earliest biome to the latest, whether you can eat them or not.
+  - Cooked food is ordered by the stat it raises most, in four sections (health, balanced health and stamina, stamina, eitr), lowest first.
+  - Armour is grouped by set, then helmet, chest and legs, also for sets the game doesn't name (such as the mage sets). Weapons are grouped by class, one-handed before two-handed.
+  - Moulds and casts get their own group, ordered like the gear they make: armour sets first, then weapons (staffs included), then shields.
   - Upgrade kits get their own group: armour kits by tier, then weapon kits by tier.
   - Metal bars and metal parts (nails, chains, springs) are separate groups, so all bars sit together and all nails sit together.
   - Hides get their own group, by tier. Jute and linen thread moved out of the metals.

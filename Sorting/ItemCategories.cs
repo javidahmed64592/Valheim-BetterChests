@@ -11,7 +11,8 @@ namespace BetterChests.Sorting;
 /// hides, food, weapons and so on), and ordered within each group:
 /// </para>
 /// <list type="bullet">
-/// <item>Food (anything edible) by the stat it raises most, health then stamina then eitr, lowest first.</item>
+/// <item>Crops (anything picked from a plant, edible or not) by tier.</item>
+/// <item>Cooked food by the stat it raises most (health, balanced health and stamina, stamina, eitr), lowest first.</item>
 /// <item>Armour by set (sets in tier order), then slot: helmet, chest, legs, hands, cape.</item>
 /// <item>Weapons by class, one-handed before two-handed, then tier.</item>
 /// <item>Moulds and casts next to the gear they make, in the same order as that gear.</item>
@@ -36,8 +37,8 @@ internal static class ItemCategories
         UpgradeKits = 9,
         GearParts = 10,
         Seeds = 11,
-        Crops = 12,
-        RawMeat = 13,
+        RawMeat = 12,
+        Crops = 13,
         Food = 14,
         Meads = 15,
         Ammo = 16,
@@ -75,7 +76,13 @@ internal static class ItemCategories
         ]),
         (Category.OtherMaterials, ["Eitr", "LinenThread", "JuteRed", "JuteBlue", "NornThread"]),
         (Category.Seeds, ["CarrotSeeds", "TurnipSeeds", "OnionSeeds", "VineberrySeeds", "Acorn", "BeechSeeds", "BirchSeeds", "FirCone", "PineCone"]),
-        (Category.Crops, ["Barley", "BarleyFlour", "Flax", "Carrot", "Turnip", "Onion", "Thistle", "Dandelion", "Root", "Fiddleheadfern"]),
+        // Crops picked from plants, wild or grown, by the biome they come from.
+        (Category.Crops,
+        [
+            "Raspberry", "Mushroom", "Dandelion", "Blueberries", "Carrot", "MushroomYellow", "Thistle", "Turnip", "Root",
+            "Onion", "Cloudberry", "Barley", "BarleyFlour", "Flax", "MushroomJotunPuffs", "MushroomMagecap",
+            "MushroomSmokePuff", "Vineberry", "Fiddleheadfern", "Lingonberry", "Oat", "OatFlour", "Kale", "Poteitr",
+        ]),
         (Category.RawMeat,
         [
             "RawMeat", "NeckTail", "DeerMeat", "HareMeat", "WolfMeat", "BjornMeat", "SerpentMeat", "LoxMeat", "ChickenMeat",
@@ -186,12 +193,6 @@ internal static class ItemCategories
 
     private static SortKey KeyOf(ItemDrop.ItemData.SharedData shared, string prefab)
     {
-        if (IsFood(shared))
-        {
-            (int stat, float value) = FoodStat(shared);
-            return new SortKey((int)Category.Food, stat, 0, "", 0, value);
-        }
-
         string name = shared.m_name ?? "";
         if (name.StartsWith(UpgradeKitToken, StringComparison.Ordinal))
         {
@@ -205,14 +206,26 @@ internal static class ItemCategories
             return GearKey(shared, prefab);
         }
 
-        if (shared.m_itemType == ItemDrop.ItemData.ItemType.Consumable)
-        {
-            return new SortKey((int)Category.Meads, 1, ItemTiers.Of(prefab), "", 0, 0f);
-        }
-
         if (prefab != null && KnownByPrefab.TryGetValue(prefab, out (Category Category, int Index) known))
         {
             return new SortKey((int)known.Category, 0, 0, "", known.Index, 0f);
+        }
+
+        // Picked from a plant, edible or not: with the crops, by tier.
+        if (ItemTiers.IsHarvested(prefab) && prefab != null && ByKeyword(prefab) != Category.Seeds)
+        {
+            return new SortKey((int)Category.Crops, 1, ItemTiers.Of(prefab), "", 0, 0f);
+        }
+
+        if (IsFood(shared))
+        {
+            (int stat, float value) = FoodStat(shared);
+            return new SortKey((int)Category.Food, stat, 0, "", 0, value);
+        }
+
+        if (shared.m_itemType == ItemDrop.ItemData.ItemType.Consumable)
+        {
+            return new SortKey((int)Category.Meads, 1, ItemTiers.Of(prefab), "", 0, 0f);
         }
 
         // A mould or cast: next to the gear it makes, the mould first.
@@ -220,7 +233,7 @@ internal static class ItemCategories
         if (gear != null)
         {
             SortKey of = GearKey(gear.m_itemData.m_shared, gear.name);
-            return new SortKey((int)Category.GearParts, (of.Group * 100) + of.Sub, of.Tier, of.Family, of.Slot,
+            return new SortKey((int)Category.GearParts, (GearPartOrder(of.Group) * 1000) + of.Sub, of.Tier, of.Family, of.Slot,
                 name.Contains(MouldToken) ? 0f : 1f);
         }
         if (name.Contains(MouldToken))
@@ -242,7 +255,7 @@ internal static class ItemCategories
             if (IsFood(made))
             {
                 (int stat, float value) = FoodStat(made);
-                return new SortKey((int)Category.Food, 3 + stat, 0, "", 0, value);
+                return new SortKey((int)Category.Food, FoodSections + stat, 0, "", 0, value);
             }
             return new SortKey((int)Category.Meads, 0, ItemTiers.Of(prefab), "", 0, 0f);
         }
@@ -262,20 +275,80 @@ internal static class ItemCategories
             && (shared.m_food > 0f || shared.m_foodStamina > 0f || shared.m_foodEitr > 0f);
     }
 
-    /// <summary>The stat a food raises most (0 health, 1 stamina, 2 eitr; ties go in that order) and how much.</summary>
-    private static (int Stat, float Value) FoodStat(ItemDrop.ItemData.SharedData shared)
+    /// <summary>The food sections, in order. Uncooked dishes follow, in the same sections.</summary>
+    private const int FoodSections = 4;
+
+    /// <summary>How close health and stamina must be (as a share of the larger) for a food to count as balanced.</summary>
+    private const float BalancedMargin = 0.1f;
+
+    /// <summary>
+    /// The section a food goes in, and the value it is ordered by: 0 health, 1 balanced (health and stamina about the
+    /// same), 2 stamina, 3 eitr, whichever it raises most.
+    /// </summary>
+    private static (int Section, float Value) FoodStat(ItemDrop.ItemData.SharedData shared)
     {
-        (int stat, float value) = (0, shared.m_food);
-        if (shared.m_foodStamina > value)
+        float health = shared.m_food;
+        float stamina = shared.m_foodStamina;
+        float eitr = shared.m_foodEitr;
+        float most = Mathf.Max(health, stamina);
+        if (eitr > most)
         {
-            (stat, value) = (1, shared.m_foodStamina);
+            return (3, eitr);
         }
-        if (shared.m_foodEitr > value)
+        if (most > 0f && Mathf.Abs(health - stamina) <= most * BalancedMargin)
         {
-            (stat, value) = (2, shared.m_foodEitr);
+            return (1, most);
         }
-        return (stat, value);
+        return health >= stamina ? (0, health) : (2, stamina);
     }
+
+    /// <summary>Gear parts: armour first, then weapons, then shields, then anything else.</summary>
+    private static int GearPartOrder(int group)
+    {
+        return group switch
+        {
+            (int)Category.Armour => 0,
+            (int)Category.Weapons => 1,
+            (int)Category.Shields => 2,
+            _ => 3,
+        };
+    }
+
+    /// <summary>
+    /// Which set an armour piece belongs to: its set name, or when it has none (many sets don't, such as the mage
+    /// sets), its name without the slot word, so "$item_chest_heavy_deepnorth" and "$item_helmet_heavy_deepnorth" are
+    /// the same set. Null for anything that isn't armour.
+    /// </summary>
+    internal static string ArmourFamily(ItemDrop.ItemData.SharedData shared, string prefab)
+    {
+        if (shared.m_itemType is not (ItemDrop.ItemData.ItemType.Helmet or ItemDrop.ItemData.ItemType.Chest
+            or ItemDrop.ItemData.ItemType.Legs or ItemDrop.ItemData.ItemType.Hands or ItemDrop.ItemData.ItemType.Shoulder))
+        {
+            return null;
+        }
+        if (!string.IsNullOrEmpty(shared.m_setName))
+        {
+            return shared.m_setName;
+        }
+
+        string name = string.IsNullOrEmpty(shared.m_name) ? prefab ?? "" : shared.m_name;
+        if (name.StartsWith("$item_", StringComparison.Ordinal))
+        {
+            name = name.Substring("$item_".Length);
+        }
+        List<string> words = [];
+        foreach (string word in name.ToLowerInvariant().Split(['_', ' '], StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (Array.IndexOf(SlotWords, word) < 0)
+            {
+                words.Add(word);
+            }
+        }
+        words.Sort(StringComparer.Ordinal); // "cape_deepnorth_mage" and "chest_mage_deepnorth" match
+        return string.Join(" ", words);
+    }
+
+    private static readonly string[] SlotWords = ["helmet", "hood", "chest", "legs", "cape", "shoulder", "hands", "gloves"];
 
     /// <summary>"$item_upgrader_tier3 $item_upgrader_armor …": armour kits first, each kind by tier.</summary>
     private static SortKey UpgradeKitKey(string name)
@@ -315,10 +388,10 @@ internal static class ItemCategories
             case ItemDrop.ItemData.ItemType.Legs:
             case ItemDrop.ItemData.ItemType.Hands:
             case ItemDrop.ItemData.ItemType.Shoulder:
-                string set = shared.m_setName;
-                int setTier = ItemTiers.OfSet(set);
-                return new SortKey((int)Category.Armour, 0, setTier != ItemTiers.Unknown ? setTier : tier,
-                    string.IsNullOrEmpty(set) ? "~" : set, SlotOrder(type), 0f);
+                string family = ArmourFamily(shared, prefab);
+                int familyTier = ItemTiers.OfArmourFamily(family);
+                return new SortKey((int)Category.Armour, 0, familyTier != ItemTiers.Unknown ? familyTier : tier,
+                    family, SlotOrder(type), 0f);
             case ItemDrop.ItemData.ItemType.Ammo:
             case ItemDrop.ItemData.ItemType.AmmoNonEquipable:
                 return new SortKey((int)Category.Ammo, 0, 0, shared.m_ammoType, 0, tier);
