@@ -1,4 +1,4 @@
-using BetterChests.Deposit;
+using BetterChests.Core;
 
 using HarmonyLib;
 
@@ -9,6 +9,6 @@ internal static class Container_Interact_Patch
 {
     private static void Prefix(Container __instance, bool hold)
     {
-        AutoDeposit.BeforeInteract(__instance, hold);
+        ChestRequests.BeforeInteract(__instance, hold);
     }
 }

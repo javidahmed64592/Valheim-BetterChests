@@ -10,14 +10,18 @@ Enhances chests with additional features like sorting and auto-depositing!
 
 ![Split Stack Window](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/game_screenshot_2.png)
 
-| Configurable Key    | Action                                                                                          |
-| ------------------- | ----------------------------------------------------------------------------------------------- |
-| `R`                 | Take all: move everything in the open chest into your inventory.                                |
-| `T`                 | Place stacks: move items, except marked ones, onto matching stacks in the open chest.           |
-| `F`                 | Deposit all: move everything except your hotbar, equipped and marked items into the open chest. |
-| `G`                 | Sort the open chest.                                                                            |
-| `Alt` + Right-click | Mark or unmark an item in your inventory to keep it when depositing all or placing stacks.      |
-| Mouse wheel         | Change the amount by one when splitting a stack (Shift+click).                                  |
+| Configurable Key    | Action                                                                                                  |
+| ------------------- | ------------------------------------------------------------------------------------------------------- |
+| `R`                 | Take all: move everything in the chest into your inventory.                                             |
+| `T`                 | Place stacks: move items, except marked ones, onto matching stacks in the chest.                        |
+| `F`                 | Deposit all: move everything except your hotbar, equipped and marked items into the chest.              |
+| `G`                 | Sort the chest.                                                                                         |
+| `Alt` + Right-click | Mark or unmark an item in your inventory to keep it when depositing all or placing stacks.              |
+| Mouse wheel         | Change the amount by one when splitting a stack (Shift+click).                                          |
+
+The chest keys work with the chest open, or just while looking at it.
+
+![Chest Key Hints](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/game_screenshot_3.png)
 
 ## Auto Deposit
 

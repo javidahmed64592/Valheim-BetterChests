@@ -30,6 +30,12 @@ internal static class ChestSort
         _ = gui.m_moveItemEffects.Create(gui.transform.position, Quaternion.identity);
     }
 
+    /// <summary>Sorts a chest this game owns.</summary>
+    internal static void SortContainer(Container container)
+    {
+        Sort(container.GetInventory());
+    }
+
     private static void Sort(Inventory inventory)
     {
         List<ItemDrop.ItemData> items = inventory.GetAllItems();

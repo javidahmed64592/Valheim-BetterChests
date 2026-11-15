@@ -23,7 +23,17 @@ internal static class DepositAll
 
         // Drop whatever is being dragged back where it came from, like the vanilla chest buttons do.
         gui.SetupDragItem(null, null, 1);
+        if (DepositInto(container, player))
+        {
+            _ = gui.m_moveItemEffects.Create(gui.transform.position, Quaternion.identity);
+        }
+    }
 
+    /// <summary>
+    /// Moves the player's items into a chest this game owns. True if anything moved.
+    /// </summary>
+    internal static bool DepositInto(Container container, Player player)
+    {
         Inventory from = player.GetInventory();
         Inventory to = container.GetInventory();
         bool moved = false;
@@ -48,13 +58,11 @@ internal static class DepositAll
             }
         }
 
-        if (!moved)
+        if (moved)
         {
-            return;
+            from.Changed();
+            to.Changed();
         }
-
-        from.Changed();
-        to.Changed();
-        _ = gui.m_moveItemEffects.Create(gui.transform.position, Quaternion.identity);
+        return moved;
     }
 }

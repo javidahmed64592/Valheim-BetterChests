@@ -368,7 +368,7 @@ internal static class KeyHintUI
     /// <summary>
     /// "LeftControl" -> "Left Ctrl", "Alpha1" -> "1", "F" -> "F".
     /// </summary>
-    private static string KeyName(KeyCode key)
+    internal static string KeyName(KeyCode key)
     {
         string name = key.ToString();
         if (name.StartsWith("Alpha", System.StringComparison.Ordinal))

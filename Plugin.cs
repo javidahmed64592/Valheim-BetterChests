@@ -5,6 +5,7 @@ using BepInEx.Logging;
 using BetterChests.Core;
 using BetterChests.Deposit;
 using BetterChests.Duplicates;
+using BetterChests.Keys;
 
 using HarmonyLib;
 
@@ -41,22 +42,23 @@ public class BetterChestsPlugin : BaseUnityPlugin
 
         // Laid out like the chest panel's buttons: R and T for the top row, F and G for the row below.
         _takeAllKey = BindKey("Take All", "TakeAll", KeyCode.R,
-            "While a chest is open, moves everything in it into your inventory " +
+            "While a chest is open, or while looking at one, moves everything in it into your inventory " +
             "(the same as the \"Take all\" button).");
         _placeStacksKey = BindKey("Place Stacks", "PlaceStacks", KeyCode.T,
-            "While a chest is open, moves items from your inventory onto matching stacks in the chest " +
+            "While a chest is open, or while looking at one, moves items from your inventory onto matching stacks in the chest " +
             "(the same as the \"Place stacks\" button).");
         _depositAllKey = BindKey("Deposit All", "DepositAll", KeyCode.F,
-            "While a chest is open, moves everything in your inventory into it, except your hotbar and " +
+            "While a chest is open, or while looking at one, moves everything in your inventory into it, except your hotbar and " +
             "equipped items (the same as the \"Deposit all\" button).");
         _sortKey = BindKey("Sort", "Sort", KeyCode.G,
-            "While a chest is open, sorts its contents (the same as the \"Sort\" button).");
+            "While a chest is open, or while looking at one, sorts its contents (the same as the \"Sort\" button).");
         _keepItemKey = BindKey("Keep Item", "KeepItem", KeyCode.LeftAlt,
             "Hold and right-click an item in your inventory to mark it to be kept by \"Deposit all\" and " +
             "\"Place stacks\", or to unmark it. The left and right versions of Shift, Ctrl and Alt both work.");
 
         AutoDeposit.BindConfig(Config);
         ChestDuplicates.BindConfig(Config);
+        ChestKeys.BindConfig(Config);
         Translations.Load();
 
         _harmony = new Harmony(PluginGuid);
