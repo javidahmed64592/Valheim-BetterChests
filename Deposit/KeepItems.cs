@@ -1,11 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Reflection.Emit;
 
 using BetterChests.UI;
-
-using HarmonyLib;
 
 using UnityEngine;
 
@@ -62,42 +58,38 @@ internal static class KeepItems
     }
 
     /// <summary>
-    /// Keep key + right-click marks or unmarks the item instead of using it.
+    /// Keep key + right-click marks or unmarks the item instead of using it. Called before
+    /// <c>InventoryGrid.OnRightDown</c>; true if the click was used here, so vanilla should skip it.
     /// </summary>
-    [HarmonyPatch(typeof(InventoryGrid), "OnRightDown")]
-    private static class InventoryGrid_OnRightDown_Patch
+    internal static bool TryHandleRightClick(InventoryGrid grid, UIInputHandler element)
     {
-        [HarmonyPrefix]
-        private static bool Prefix(InventoryGrid __instance, UIInputHandler element)
+        if (!BetterChestsPlugin._keepItemKey.Held() || !IsPlayerGrid(grid))
         {
-            if (!BetterChestsPlugin._keepItemKey.Held() || !IsPlayerGrid(__instance))
-            {
-                return true;
-            }
-
-            Vector2i pos = __instance.GetButtonPos(element.gameObject);
-            ItemDrop.ItemData item = __instance.m_inventory.GetItemAt(pos.x, pos.y);
-            if (item == null)
-            {
-                return false;
-            }
-
-            if (AlwaysKept(item))
-            {
-                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$betterchests_always_kept");
-                return false;
-            }
-
-            Toggle(item);
             return false;
         }
+
+        Vector2i pos = grid.GetButtonPos(element.gameObject);
+        ItemDrop.ItemData item = grid.m_inventory.GetItemAt(pos.x, pos.y);
+        if (item == null)
+        {
+            return true;
+        }
+
+        if (AlwaysKept(item))
+        {
+            Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$betterchests_always_kept");
+            return true;
+        }
+
+        Toggle(item);
+        return true;
     }
 
     /// <summary>
     /// The player's items that "Place stacks" may move: all of them except marked ones. Equipped items are
     /// already skipped by vanilla, and hotbar items are placed as in vanilla.
     /// </summary>
-    private static List<ItemDrop.ItemData> ItemsToStack(Inventory fromInventory)
+    internal static List<ItemDrop.ItemData> ItemsToStack(Inventory fromInventory)
     {
         List<ItemDrop.ItemData> items = fromInventory.GetAllItems();
         return Player.m_localPlayer == null || fromInventory != Player.m_localPlayer.GetInventory()
@@ -105,59 +97,23 @@ internal static class KeepItems
             : [.. items.Where(item => !IsMarked(item) || AlwaysKept(item))];
     }
 
-    /// <summary>
-    /// "Place stacks" (the button, its key, and holding use on a chest) copies the player's item list and
-    /// moves what matches; this swaps that list for one without the marked items.
-    /// </summary>
-    [HarmonyPatch(typeof(Inventory), nameof(Inventory.StackAll))]
-    private static class Inventory_StackAll_Patch
-    {
-        private static readonly MethodInfo GetAllItems = AccessTools.Method(typeof(Inventory), nameof(Inventory.GetAllItems));
-        private static readonly MethodInfo Replacement = AccessTools.Method(typeof(KeepItems), nameof(ItemsToStack));
 
-        [HarmonyTranspiler]
-        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            bool replaced = false;
-            foreach (CodeInstruction instruction in instructions)
-            {
-                if (!replaced && instruction.Calls(GetAllItems))
-                {
-                    replaced = true;
-                    yield return new CodeInstruction(OpCodes.Call, Replacement).MoveLabelsFrom(instruction);
-                    continue;
-                }
-
-                yield return instruction;
-            }
-
-            if (!replaced)
-            {
-                BetterChestsPlugin._log.LogWarning("Inventory.StackAll not as expected: Place stacks will not skip kept items.");
-            }
-        }
-    }
 
     /// <summary>
     /// Shows or hides the frames each time vanilla redraws the player's inventory.
     /// </summary>
-    [HarmonyPatch(typeof(InventoryGrid), "UpdateGui")]
-    private static class InventoryGrid_UpdateGui_Patch
+    internal static void OnGridUpdated(InventoryGrid grid)
     {
-        [HarmonyPostfix]
-        private static void Postfix(InventoryGrid __instance)
+        if (!IsPlayerGrid(grid))
         {
-            if (!IsPlayerGrid(__instance))
-            {
-                return;
-            }
+            return;
+        }
 
-            foreach (InventoryElement element in __instance.m_elements)
-            {
-                ItemDrop.ItemData item = __instance.m_inventory.GetItemAt(element.Position.x, element.Position.y);
-                bool show = item != null && IsMarked(item) && !AlwaysKept(item);
-                SlotFrame.Show(element, FrameName, FrameColour, show);
-            }
+        foreach (InventoryElement element in grid.m_elements)
+        {
+            ItemDrop.ItemData item = grid.m_inventory.GetItemAt(element.Position.x, element.Position.y);
+            bool show = item != null && IsMarked(item) && !AlwaysKept(item);
+            SlotFrame.Show(element, FrameName, FrameColour, show);
         }
     }
 }
