@@ -173,11 +173,29 @@ internal static class ChestSearch
     /// <summary>
     /// A click on the chest grid (before <c>InventoryGui.OnSelectedItem</c>). While searching, a click on an item takes
     /// that stack, and an item dragged from the player's inventory goes into the group (see
-    /// <see cref="SearchActions.Drop"/>). True if handled here, so vanilla should skip it.
+    /// <see cref="SearchActions.Drop"/>), as does an item Ctrl + clicked in the player's inventory. True if handled here,
+    /// so vanilla should skip it.
     /// </summary>
-    internal static bool TryHandleClick(InventoryGui gui, InventoryGrid grid, ItemDrop.ItemData item)
+    internal static bool TryHandleClick(InventoryGui gui, InventoryGrid grid, ItemDrop.ItemData item, InventoryGrid.Modifier mod)
     {
-        if (!Active || grid != gui.m_containerGrid)
+        if (!Active)
+        {
+            return false;
+        }
+
+        // Ctrl + click on the player's inventory: into the group instead of straight into the open chest. Unequipped
+        // first, as vanilla does.
+        Player player = Player.m_localPlayer;
+        if (grid == gui.m_playerGrid && mod == InventoryGrid.Modifier.Move && item != null && player != null
+            && gui.m_currentContainer != null && !item.m_shared.m_questItem)
+        {
+            player.RemoveEquipAction(item);
+            player.UnequipItem(item);
+            SearchActions.Drop(gui.m_currentContainer, player.GetInventory(), item, item.m_stack);
+            return true;
+        }
+
+        if (grid != gui.m_containerGrid)
         {
             return false;
         }

@@ -155,21 +155,43 @@ internal static class SearchActions
     }
 
     /// <summary>
-    /// Tops up the group's partial stacks of this item, then puts what is left in the open chest. <paramref name="left"/>
-    /// is how many of the item didn't fit anywhere.
+    /// Puts an item into the group: first onto partial stacks of it anywhere, then into free slots in the other chests
+    /// that already hold it (so it joins the rest of its kind), and only then into the open chest.
+    /// <paramref name="left"/> is how many of the item didn't fit anywhere.
     /// </summary>
     private static bool Store(ItemDrop.ItemData item, Inventory from, List<Container> owned, Container open, out int left)
     {
         bool moved = TopUp(item, from, owned) > 0;
         left = Mathf.Max(0, item.m_stack);
-        if (left <= 0 || !owned.Contains(open))
+        foreach (Container chest in owned)
         {
-            return moved;
+            if (left <= 0)
+            {
+                return moved;
+            }
+            if (chest != open && Holds(chest.GetInventory(), item))
+            {
+                moved |= MoveInto(item, from, chest.GetInventory(), out left);
+            }
         }
 
-        Inventory to = open.GetInventory();
-        moved |= MoveInto(item, from, to, out left);
+        if (left > 0 && owned.Contains(open))
+        {
+            moved |= MoveInto(item, from, open.GetInventory(), out left);
+        }
         return moved;
+    }
+
+    private static bool Holds(Inventory inventory, ItemDrop.ItemData item)
+    {
+        foreach (ItemDrop.ItemData stack in inventory.GetAllItems())
+        {
+            if (stack != item && stack.IsSameType(item))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     /// <summary>

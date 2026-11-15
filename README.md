@@ -50,7 +50,7 @@ While searching, the chest's buttons work on the whole group:
 
 - **Take all** takes every stack the search shows.
 - **Place stacks** tops up stacks anywhere in the group with the items you carry that match the search.
-- **Deposit all**, and dragging an item onto the results, first top up matching stacks anywhere in the group, then put what is left in the open chest.
+- **Deposit all**, Ctrl + clicking an item in your inventory, and dragging an item onto the results put each item into the chests that already hold it (topping up their stacks, then their free slots), and only what is left into the open chest.
 - **Sort** gathers each item the search shows into the chest that already holds the most of it, then sorts that chest.
 Closing the chest empties the search.
 
