@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 
+using BetterChests.Search;
+
 using UnityEngine;
 
 namespace BetterChests.Deposit;
@@ -23,6 +25,11 @@ internal static class DepositAll
 
         // Drop whatever is being dragged back where it came from, like the vanilla chest buttons do.
         gui.SetupDragItem(null, null, 1);
+        if (ChestSearch.Active)
+        {
+            SearchActions.DepositAll(container);
+            return;
+        }
         if (DepositInto(container, player))
         {
             _ = gui.m_moveItemEffects.Create(gui.transform.position, Quaternion.identity);

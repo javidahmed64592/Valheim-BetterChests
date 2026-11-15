@@ -39,6 +39,26 @@ internal static class ChestSearch
     /// <summary>True while the grid shows search results instead of the open chest.</summary>
     internal static bool Active => _field != null && _field.text.Trim().Length > 0;
 
+    /// <summary>True if the item's name matches what is typed.</summary>
+    internal static bool Matches(ItemDrop.ItemData item)
+    {
+        string text = _field != null ? _field.text.Trim() : "";
+        return text.Length > 0
+            && Localization.instance.Localize(item.m_shared.m_name).IndexOf(text, StringComparison.CurrentCultureIgnoreCase) >= 0;
+    }
+
+    /// <summary>Every stack the search shows, and the chest it is in.</summary>
+    internal static List<(Container Chest, ItemDrop.ItemData Item)> Results()
+    {
+        return [.. Sources.Values];
+    }
+
+    /// <summary>Rebuilds the results on the next frame (after the chests change).</summary>
+    internal static void Refresh()
+    {
+        _nextRefresh = 0f;
+    }
+
     /// <summary>Adds the search bar to the title row, when the inventory screen is created.</summary>
     internal static void Create()
     {
@@ -112,8 +132,6 @@ internal static class ChestSearch
     private static void Rebuild(Container chest)
     {
         _nextRefresh = Time.time + RefreshInterval;
-        string text = _field.text.Trim();
-
         List<(Container Chest, ItemDrop.ItemData Item)> matches = [];
         foreach (Container member in ChestClusters.GroupOf(chest))
         {
@@ -124,8 +142,7 @@ internal static class ChestSearch
             }
             foreach (ItemDrop.ItemData item in inventory.GetAllItems())
             {
-                string name = Localization.instance.Localize(item.m_shared.m_name);
-                if (name.IndexOf(text, StringComparison.CurrentCultureIgnoreCase) >= 0)
+                if (Matches(item))
                 {
                     matches.Add((member, item));
                 }
@@ -155,7 +172,8 @@ internal static class ChestSearch
 
     /// <summary>
     /// A click on the chest grid (before <c>InventoryGui.OnSelectedItem</c>). While searching, a click on an item takes
-    /// that stack, and nothing can be dropped into the view. True if handled here, so vanilla should skip it.
+    /// that stack, and an item dragged from the player's inventory goes into the group (see
+    /// <see cref="SearchActions.Drop"/>). True if handled here, so vanilla should skip it.
     /// </summary>
     internal static bool TryHandleClick(InventoryGui gui, InventoryGrid grid, ItemDrop.ItemData item)
     {
@@ -164,7 +182,15 @@ internal static class ChestSearch
             return false;
         }
 
-        if (gui.m_dragItem == null && item != null && Sources.TryGetValue(item, out (Container Chest, ItemDrop.ItemData Item) source))
+        if (gui.m_dragItem != null)
+        {
+            ItemDrop.ItemData dragged = gui.m_dragItem;
+            Inventory from = gui.m_dragInventory;
+            int amount = gui.m_dragAmount;
+            gui.SetupDragItem(null, null, 1);
+            SearchActions.Drop(gui.m_currentContainer, from, dragged, amount);
+        }
+        else if (item != null && Sources.TryGetValue(item, out (Container Chest, ItemDrop.ItemData Item) source))
         {
             Take(source.Chest, source.Item);
         }
