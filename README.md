@@ -49,7 +49,7 @@ Marked items are also kept by **Place stacks**.
 ### Sort
 
 The open chest gets a **Sort** button under **Place stacks**.
-Sorting merges partial stacks, then groups related items together, in this order: wood, stone and minerals, ores, metal bars, nails and other metal parts, hides, other creature parts, valuables, other materials, upgrade kits, moulds and casts, seeds, raw meat and fish, crops, cooked food, meads, then ammo, weapons, shields, tools, armour, utility items and trophies.
+Sorting merges partial stacks, then groups related items together, in this order: wood, stone and minerals, ores, metal bars, nails and other metal parts, hides, other creature parts, valuables, other materials, upgrade kits, moulds and casts, seeds, raw meat and fish, crops, cooked food, meads, other consumables, then ammo, weapons, shields, tools, armour, utility items and trophies.
 Within each group, items are ordered by tier, from the earliest biome to the latest. Also:
 
 - Crops (anything picked from a plant, edible or not) are ordered by tier.
@@ -58,6 +58,7 @@ Within each group, items are ordered by tier, from the earliest biome to the lat
 - Weapons are grouped by class (swords, axes, clubs, spears, polearms, knives, fists, bows, crossbows, staffs), one-handed before two-handed.
 - Moulds and casts are ordered like the gear they make: armour sets first, then weapons, then shields.
 - Upgrade kits: armour kits by tier, then weapon kits by tier.
+- Meads are grouped by what they do (health, stamina, eitr, each resistance, then the rest), then by tier, with their bases first.
 
 Items from other mods are sorted the same way, by what the game says they are and where they come from.
 

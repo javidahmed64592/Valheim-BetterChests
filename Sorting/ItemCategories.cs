@@ -17,6 +17,8 @@ namespace BetterChests.Sorting;
 /// <item>Weapons by class, one-handed before two-handed, then tier.</item>
 /// <item>Moulds and casts next to the gear they make, in the same order as that gear.</item>
 /// <item>Upgrade kits: armour kits by tier, then weapon kits by tier.</item>
+/// <item>Meads (what a fermenter makes) by what they do (health, stamina, eitr, each resistance, other), then tier; their
+/// bases first, in the same order.</item>
 /// <item>Vanilla materials in a listed order (by tier); other items by tier (see <see cref="ItemTiers"/>).</item>
 /// </list>
 /// </summary>
@@ -41,14 +43,15 @@ internal static class ItemCategories
         Crops = 13,
         Food = 14,
         Meads = 15,
-        Ammo = 16,
-        Weapons = 17,
-        Shields = 18,
-        Tools = 19,
-        Armour = 20,
-        Utility = 21,
-        Trophies = 22,
-        Misc = 23,
+        OtherConsumables = 16,
+        Ammo = 17,
+        Weapons = 18,
+        Shields = 19,
+        Tools = 20,
+        Armour = 21,
+        Utility = 22,
+        Trophies = 23,
+        Misc = 24,
     }
 
     /// <summary>Vanilla materials in a fixed order (roughly by tier) within their group.</summary>
@@ -225,7 +228,9 @@ internal static class ItemCategories
 
         if (shared.m_itemType == ItemDrop.ItemData.ItemType.Consumable)
         {
-            return new SortKey((int)Category.Meads, 1, ItemTiers.Of(prefab), "", 0, 0f);
+            return ItemTiers.IsMead(prefab)
+                ? MeadKey(shared, prefab, isBase: false)
+                : new SortKey((int)Category.OtherConsumables, 0, ItemTiers.Of(prefab), "", 0, 0f);
         }
 
         // A mould or cast: next to the gear it makes, the mould first.
@@ -247,17 +252,20 @@ internal static class ItemCategories
             return new SortKey((int)Category.RawMeat, 1, ItemTiers.Of(prefab), "", 0, 0f);
         }
 
-        // An ingredient made into one food or mead (an uncooked dish, a mead base): after that food or with the meads.
+        // An uncooked dish: after the cooked food, by the dish it becomes. A mead base: with the meads, before them.
         ItemDrop consumable = ItemTiers.ConsumableMadeFrom(prefab);
         if (consumable != null)
         {
             ItemDrop.ItemData.SharedData made = consumable.m_itemData.m_shared;
-            if (IsFood(made))
+            if (ItemTiers.IsUncookedDish(prefab) && IsFood(made))
             {
                 (int stat, float value) = FoodStat(made);
                 return new SortKey((int)Category.Food, FoodSections + stat, 0, "", 0, value);
             }
-            return new SortKey((int)Category.Meads, 0, ItemTiers.Of(prefab), "", 0, 0f);
+            if (ItemTiers.IsMeadBase(prefab))
+            {
+                return MeadKey(made, prefab, isBase: true);
+            }
         }
 
         Category category = shared.m_itemType switch
@@ -300,6 +308,48 @@ internal static class ItemCategories
             return (1, most);
         }
         return health >= stamina ? (0, health) : (2, stamina);
+    }
+
+    /// <summary>
+    /// Meads by what they do, then tier: 0 health, 1 stamina, 2 eitr, 3 resistances (grouped by damage type), 4
+    /// anything else (swimming, carry weight, speed…). The bases come first, in the same order, by the mead they make
+    /// (<paramref name="shared"/> is the mead's), at their own tier.
+    /// </summary>
+    private static SortKey MeadKey(ItemDrop.ItemData.SharedData shared, string prefab, bool isBase)
+    {
+        (int effect, int damageType) = MeadEffect(shared.m_consumeStatusEffect as SE_Stats);
+        // The damage type keeps each resistance together (all fire, then all frost…) before going by tier.
+        return new SortKey((int)Category.Meads, ((isBase ? 0 : 1) * 100000) + (effect * 10000) + damageType,
+            ItemTiers.Of(prefab), "", 0, 0f);
+    }
+
+    private static (int Effect, int DamageType) MeadEffect(SE_Stats stats)
+    {
+        if (stats == null)
+        {
+            return (4, 0);
+        }
+        if (stats.m_healthUpFront > 0f || stats.m_healthOverTime > 0f || stats.m_healthRegenMultiplier > 1f)
+        {
+            return (0, 0);
+        }
+        if (stats.m_staminaUpFront > 0f || stats.m_staminaOverTime > 0f || stats.m_staminaRegenMultiplier > 1f)
+        {
+            return (1, 0);
+        }
+        if (stats.m_eitrUpFront > 0f || stats.m_eitrOverTime > 0f || stats.m_eitrRegenMultiplier > 1f)
+        {
+            return (2, 0);
+        }
+        foreach (HitData.DamageModPair mod in stats.m_mods)
+        {
+            if (mod.m_modifier is HitData.DamageModifier.Resistant or HitData.DamageModifier.VeryResistant
+                or HitData.DamageModifier.Immune)
+            {
+                return (3, (int)mod.m_type);
+            }
+        }
+        return (4, 0);
     }
 
     /// <summary>Gear parts: armour first, then weapons, then shields, then anything else.</summary>

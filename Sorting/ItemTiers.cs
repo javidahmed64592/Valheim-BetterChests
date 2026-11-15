@@ -30,6 +30,10 @@ internal static class ItemTiers
     private static readonly Dictionary<string, ItemDrop> ConsumableFor = [];
     private static readonly HashSet<string> RawFoods = [];
     private static readonly HashSet<string> Harvested = [];
+    private static readonly HashSet<string> Crafted = [];
+    private static readonly HashSet<string> CookedInputs = [];
+    private static readonly HashSet<string> FermenterInputs = [];
+    private static readonly HashSet<string> FermenterOutputs = [];
     private static readonly Dictionary<string, int> ArmourFamilyTiers = [];
 
     /// <summary>The item's tier (1 = Meadows … 8 = Deep North), or <see cref="Unknown"/>.</summary>
@@ -60,6 +64,27 @@ internal static class ItemTiers
     {
         Build();
         return prefab != null && Harvested.Contains(prefab);
+    }
+
+    /// <summary>Something a recipe makes and a cooking station or oven then cooks: an uncooked dish.</summary>
+    internal static bool IsUncookedDish(string prefab)
+    {
+        Build();
+        return prefab != null && Crafted.Contains(prefab) && CookedInputs.Contains(prefab);
+    }
+
+    /// <summary>What goes into a fermenter: a mead base.</summary>
+    internal static bool IsMeadBase(string prefab)
+    {
+        Build();
+        return prefab != null && FermenterInputs.Contains(prefab);
+    }
+
+    /// <summary>What a fermenter makes: a mead (or a barley wine).</summary>
+    internal static bool IsMead(string prefab)
+    {
+        Build();
+        return prefab != null && FermenterOutputs.Contains(prefab);
     }
 
     /// <summary>The lowest tier among an armour set's pieces (see <see cref="ItemCategories.ArmourFamily"/>).</summary>
@@ -112,6 +137,10 @@ internal static class ItemTiers
         ConsumableFor.Clear();
         RawFoods.Clear();
         Harvested.Clear();
+        Crafted.Clear();
+        CookedInputs.Clear();
+        FermenterInputs.Clear();
+        FermenterOutputs.Clear();
         ArmourFamilyTiers.Clear();
 
         AddCreatureSources();
@@ -120,8 +149,8 @@ internal static class ItemTiers
         // What each item is made into, by recipe or by a station's conversion.
         Dictionary<string, HashSet<ItemDrop>> madeInto = [];
         List<(List<string> Inputs, ItemDrop Output)> makes = [];
-        HashSet<string> crafted = [];
-        HashSet<string> cooked = [];
+        Dictionary<int, string> stationOf = []; // index in makes -> the crafting station's prefab
+        Dictionary<string, List<string>> stationNeeds = []; // crafting station's prefab -> what building it needs
         foreach (Recipe recipe in db.m_recipes)
         {
             if (recipe == null || recipe.m_item == null || !recipe.m_enabled || recipe.m_resources == null)
@@ -139,8 +168,12 @@ internal static class ItemTiers
             }
             if (inputs.Count > 0)
             {
+                if (recipe.m_craftingStation != null)
+                {
+                    stationOf[makes.Count] = recipe.m_craftingStation.name;
+                }
                 makes.Add((inputs, recipe.m_item));
-                _ = crafted.Add(recipe.m_item.name);
+                _ = Crafted.Add(recipe.m_item.name);
             }
         }
 
@@ -161,13 +194,33 @@ internal static class ItemTiers
                 {
                     if (conversion?.m_from != null)
                     {
-                        _ = cooked.Add(conversion.m_from.name);
+                        _ = CookedInputs.Add(conversion.m_from.name);
                     }
                 }
             }
             if (prefab.TryGetComponent(out Fermenter fermenter))
             {
                 AddConversions(makes, fermenter.m_conversion, c => (c.m_from, c.m_to));
+                foreach (Fermenter.ItemConversion conversion in fermenter.m_conversion)
+                {
+                    if (conversion?.m_from != null && conversion.m_to != null)
+                    {
+                        _ = FermenterInputs.Add(conversion.m_from.name);
+                        _ = FermenterOutputs.Add(conversion.m_to.name);
+                    }
+                }
+            }
+            if (prefab.GetComponent<CraftingStation>() != null && prefab.TryGetComponent(out Piece stationPiece))
+            {
+                List<string> needs = [];
+                foreach (Piece.Requirement requirement in stationPiece.m_resources)
+                {
+                    if (requirement?.m_resItem != null)
+                    {
+                        needs.Add(requirement.m_resItem.name);
+                    }
+                }
+                stationNeeds[prefab.name] = needs;
             }
             if (prefab.TryGetComponent(out Plant plant) && prefab.TryGetComponent(out Piece planted))
             {
@@ -175,9 +228,9 @@ internal static class ItemTiers
             }
         }
 
-        foreach (string input in cooked)
+        foreach (string input in CookedInputs)
         {
-            if (!crafted.Contains(input))
+            if (!Crafted.Contains(input))
             {
                 _ = RawFoods.Add(input);
             }
@@ -196,20 +249,29 @@ internal static class ItemTiers
             }
         }
 
-        // An item made from others is as far into the game as the furthest of them. Repeated until nothing changes,
-        // since a bar comes from an ore, a nail from a bar, and so on.
+        // An item made from others is as far into the game as the furthest of them, and as the crafting station that
+        // makes it (a Black Forge is built from Mistlands materials, so nothing made at it is earlier). Repeated until
+        // nothing changes, since a bar comes from an ore, a nail from a bar, and so on.
+        Dictionary<string, int> stationTiers = [];
         for (int pass = 0; pass < 10; pass++)
         {
-            bool changed = false;
-            foreach ((List<string> inputs, ItemDrop output) in makes)
+            foreach (KeyValuePair<string, List<string>> station in stationNeeds)
             {
-                int tier = 0;
-                foreach (string input in inputs)
+                int tier = HighestKnown(station.Value);
+                if (tier > 0)
                 {
-                    if (Tiers.TryGetValue(input, out int inputTier))
-                    {
-                        tier = Mathf.Max(tier, inputTier);
-                    }
+                    stationTiers[station.Key] = tier;
+                }
+            }
+
+            bool changed = false;
+            for (int i = 0; i < makes.Count; i++)
+            {
+                (List<string> inputs, ItemDrop output) = makes[i];
+                int tier = HighestKnown(inputs);
+                if (stationOf.TryGetValue(i, out string station) && stationTiers.TryGetValue(station, out int stationTier))
+                {
+                    tier = Mathf.Max(tier, stationTier);
                 }
                 if (tier > 0)
                 {
@@ -237,10 +299,24 @@ internal static class ItemTiers
                 ArmourFamilyTiers[family] = pieceTier;
             }
 
-            FollowChain(item.name, madeInto);
+            FollowChain(item.name, item.m_itemData.m_shared, madeInto);
         }
 
         BetterChestsPlugin._log.LogInfo($"Sorting: tiers for {Tiers.Count} items, {GearFor.Count} gear parts, {ConsumableFor.Count} ingredients");
+    }
+
+    /// <summary>The highest tier among items whose tier is known, or 0 if none is.</summary>
+    private static int HighestKnown(List<string> items)
+    {
+        int tier = 0;
+        foreach (string item in items)
+        {
+            if (Tiers.TryGetValue(item, out int known))
+            {
+                tier = Mathf.Max(tier, known);
+            }
+        }
+        return tier;
     }
 
     private static void AddConversions<T>(List<(List<string>, ItemDrop)> makes, List<T> conversions, System.Func<T, (ItemDrop From, ItemDrop To)> fields)
@@ -265,9 +341,12 @@ internal static class ItemTiers
     /// upgrade kit: both lead to the same sword, so the mould is for that sword. A bar of gold makes many things, so it
     /// is for none.
     /// </summary>
-    private static void FollowChain(string prefab, Dictionary<string, HashSet<ItemDrop>> madeInto)
+    private static void FollowChain(string prefab, ItemDrop.ItemData.SharedData shared, Dictionary<string, HashSet<ItemDrop>> madeInto)
     {
-        ItemDrop gear = EndsAs(prefab, madeInto, 0, wantGear: true);
+        // Only moulds and the casts made from them are gear parts; something found (a fish, a claw) that happens to be
+        // used for one piece of gear stays with its own kind.
+        bool isPart = Crafted.Contains(prefab) || (shared.m_name != null && shared.m_name.Contains("_mold_"));
+        ItemDrop gear = isPart ? EndsAs(prefab, madeInto, 0, wantGear: true) : null;
         if (gear != null)
         {
             GearFor[prefab] = gear;
