@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using BetterChests.Core;
 using BetterChests.Deposit;
+using BetterChests.Sorting;
 
 using UnityEngine;
 
@@ -12,7 +14,8 @@ namespace BetterChests.Search;
 /// What the chest panel's buttons do while searching: they work on the whole chest group, not just the open chest.
 /// Items going into the chests first top up matching stacks anywhere in the group (25 carrots in another chest are
 /// filled up before any go in the open one); whatever is left goes into the open chest. Each chest is asked for
-/// first, as when opening it, so a chest another player has open is left out.
+/// first, as when opening it, so a chest another player has open is left out. Sort gathers each item the search
+/// shows into the chest that holds the most of it.
 /// </summary>
 internal static class SearchActions
 {
@@ -92,7 +95,7 @@ internal static class SearchActions
             bool moved = false;
             foreach (ItemDrop.ItemData item in Carried(player, onlyMatching: false))
             {
-                moved |= Store(item, player.GetInventory(), owned, open);
+                moved |= Store(item, player.GetInventory(), owned, open, out _);
             }
             Done(player, moved);
         });
@@ -118,19 +121,16 @@ internal static class SearchActions
             }
             if (amount <= 0 || amount >= item.m_stack)
             {
-                Done(player, Store(item, from, owned, open));
+                Done(player, Store(item, from, owned, open, out _));
                 return;
             }
 
-            // Only part of the stack: move a copy of that much, and put back whatever doesn't fit.
+            // Only part of the stack: move a copy of that much, and put back only what didn't fit anywhere.
             ItemDrop.ItemData part = item.Clone();
             part.m_stack = amount;
             item.m_stack -= amount;
-            bool moved = Store(part, from, owned, open);
-            if (part.m_stack > 0)
-            {
-                item.m_stack += part.m_stack;
-            }
+            bool moved = Store(part, from, owned, open, out int left);
+            item.m_stack += left;
             from.Changed();
             Done(player, moved);
         });
@@ -154,31 +154,94 @@ internal static class SearchActions
         return items;
     }
 
-    /// <summary>Tops up the group's partial stacks of this item, then puts what is left in the open chest.</summary>
-    private static bool Store(ItemDrop.ItemData item, Inventory from, List<Container> owned, Container open)
+    /// <summary>
+    /// Tops up the group's partial stacks of this item, then puts what is left in the open chest. <paramref name="left"/>
+    /// is how many of the item didn't fit anywhere.
+    /// </summary>
+    private static bool Store(ItemDrop.ItemData item, Inventory from, List<Container> owned, Container open, out int left)
     {
         bool moved = TopUp(item, from, owned) > 0;
-        if (item.m_stack <= 0 || !owned.Contains(open))
+        left = Mathf.Max(0, item.m_stack);
+        if (left <= 0 || !owned.Contains(open))
         {
             return moved;
         }
 
-        // As vanilla "Take all" does: on success the item is now in the chest; on failure what didn't fit is left in
-        // item.m_stack, still in the player's inventory.
         Inventory to = open.GetInventory();
+        moved |= MoveInto(item, from, to, out left);
+        return moved;
+    }
+
+    /// <summary>
+    /// Vanilla <c>Inventory.AddItem</c>, used safely. True from it means all of the item was placed: either the item
+    /// itself went into <paramref name="to"/>, or all of it was merged onto stacks there, which leaves its m_stack as it
+    /// was. So on true nothing is left over, whatever m_stack says, and the item comes out of <paramref name="from"/>.
+    /// False means what didn't fit is left in m_stack. (Reading m_stack after a true is what duplicated split stacks.)
+    /// </summary>
+    private static bool MoveInto(ItemDrop.ItemData item, Inventory from, Inventory to, out int left)
+    {
         int before = item.m_stack;
+        bool moved;
         if (to.AddItem(item))
         {
             _ = from.RemoveItem(item);
+            left = 0;
             moved = true;
         }
-        else if (item.m_stack != before)
+        else
         {
-            moved = true;
+            left = item.m_stack;
+            moved = left != before;
         }
         from.Changed();
         to.Changed();
         return moved;
+    }
+
+    /// <summary>
+    /// Sort: for each item the search shows, every stack of it in the group moves into the chest holding the most of
+    /// it (as far as it fits), and then each chest that took items is sorted.
+    /// </summary>
+    internal static void Gather()
+    {
+        Player player = Player.m_localPlayer;
+        List<(Container Chest, ItemDrop.ItemData Item)> results = ChestSearch.Results();
+        if (player == null || results.Count == 0)
+        {
+            return;
+        }
+
+        List<Container> chests = [.. results.Select(r => r.Chest).Distinct()];
+        WithChests(chests, owned =>
+        {
+            HashSet<Container> sorted = [];
+            bool moved = false;
+            foreach (IGrouping<string, (Container Chest, ItemDrop.ItemData Item)> kind in results
+                .Where(r => owned.Contains(r.Chest))
+                .GroupBy(r => r.Item.m_shared.m_name + "|" + r.Item.m_quality + "|" + r.Item.m_worldLevel))
+            {
+                Container target = kind
+                    .GroupBy(r => r.Chest)
+                    .OrderByDescending(g => g.Sum(r => r.Item.m_stack))
+                    .First().Key;
+                Inventory to = target.GetInventory();
+                foreach ((Container chest, ItemDrop.ItemData item) in kind)
+                {
+                    Inventory from = chest.GetInventory();
+                    if (chest != target && from.ContainsItem(item))
+                    {
+                        moved |= MoveInto(item, from, to, out _);
+                    }
+                }
+                _ = sorted.Add(target);
+            }
+
+            foreach (Container chest in sorted)
+            {
+                ChestSort.SortContainer(chest);
+            }
+            Done(player, moved || sorted.Count > 0);
+        });
     }
 
     /// <summary>Moves the item onto partial stacks of the same item in the owned chests. Returns how many moved.</summary>

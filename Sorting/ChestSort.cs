@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using BetterChests.Search;
+
 using UnityEngine;
 
 namespace BetterChests.Sorting;
@@ -26,6 +28,11 @@ internal static class ChestSort
 
         // Drop whatever is being dragged back where it came from, like the vanilla chest buttons do.
         gui.SetupDragItem(null, null, 1);
+        if (ChestSearch.Active)
+        {
+            SearchActions.Gather();
+            return;
+        }
         Sort(container.GetInventory());
         _ = gui.m_moveItemEffects.Create(gui.transform.position, Quaternion.identity);
     }
