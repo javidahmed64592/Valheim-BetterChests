@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Fixed **Place stacks** (the button, its key and holding use on a chest) moving items from your hotbar into the chest, such as a mead in the hotbar when the chest holds meads, even though marking a hotbar item says hotbar items are never deposited. Place stacks now keeps the same items as Deposit all: your hotbar, anything equipped, and marked items.
 - The chest keys (**R** take all, **T** place stacks, **F** deposit all, **G** sort) also work while looking at a chest, without opening it, and the chest's hover text shows them. They work on the same chests as opening them: not other players' private chests, chests in someone else's ward, or a chest another player has open. While they act on a chest, the key doesn't also do what the game binds it to (**F** is the Forsaken power, **R** hides your weapons) or what other mods bound to it through the game's controls. They can be turned off in the new `Chest Keys` config section, which also hides the hover text hints.
 - Moved the Harmony patches out of the feature classes into a `Patches` folder, one file per patched game method, like the other mods. No behaviour change.
 
