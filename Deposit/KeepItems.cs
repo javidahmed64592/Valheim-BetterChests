@@ -86,15 +86,16 @@ internal static class KeepItems
     }
 
     /// <summary>
-    /// The player's items that "Place stacks" may move: all of them except marked ones. Equipped items are
-    /// already skipped by vanilla, and hotbar items are placed as in vanilla.
+    /// The player's items that "Place stacks" may move: everything except the hotbar, equipped items and marked
+    /// items, the same as "Deposit all" keeps. Vanilla placed hotbar items too, so a mead in the hotbar went into a
+    /// chest holding meads, although marking it says hotbar items are never deposited.
     /// </summary>
     internal static List<ItemDrop.ItemData> ItemsToStack(Inventory fromInventory)
     {
         List<ItemDrop.ItemData> items = fromInventory.GetAllItems();
         return Player.m_localPlayer == null || fromInventory != Player.m_localPlayer.GetInventory()
             ? items
-            : [.. items.Where(item => !IsMarked(item) || AlwaysKept(item))];
+            : [.. items.Where(item => !IsMarked(item) && !AlwaysKept(item))];
     }
 
 

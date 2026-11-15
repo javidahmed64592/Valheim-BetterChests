@@ -46,7 +46,7 @@ public class BetterChestsPlugin : BaseUnityPlugin
             "While a chest is open, or while looking at one, moves everything in it into your inventory " +
             "(the same as the \"Take all\" button).");
         _placeStacksKey = BindKey("Place Stacks", "PlaceStacks", KeyCode.T,
-            "While a chest is open, or while looking at one, moves items from your inventory onto matching stacks in the chest " +
+            "While a chest is open, or while looking at one, moves items from your inventory (except your hotbar, equipped and marked items) onto matching stacks in the chest " +
             "(the same as the \"Place stacks\" button).");
         _depositAllKey = BindKey("Deposit All", "DepositAll", KeyCode.F,
             "While a chest is open, or while looking at one, moves everything in your inventory into it, except your hotbar and " +

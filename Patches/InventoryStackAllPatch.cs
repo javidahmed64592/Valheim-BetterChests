@@ -10,7 +10,7 @@ namespace BetterChests.Patches;
 
 /// <summary>
 /// "Place stacks" (the button, its key, and holding use on a chest) copies the player's item list and moves what
-/// matches; this swaps that list for one without the items marked to keep.
+/// matches; this swaps that list for one without the items kept by Deposit all (hotbar, equipped and marked items).
 /// </summary>
 [HarmonyPatch(typeof(Inventory), nameof(Inventory.StackAll))]
 internal static class Inventory_StackAll_Patch
