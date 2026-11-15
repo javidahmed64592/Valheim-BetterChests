@@ -11,5 +11,10 @@
   "betterchests_also_in_group_one": "Also in 1 other chest in this group: $1",
   "betterchests_also_in_group": "Also in $1 other chests in this group: $2",
   "betterchests_in_nearby_one": "In 1 nearby chest: $1",
-  "betterchests_in_nearby": "In $1 nearby chests: $2"
+  "betterchests_in_nearby": "In $1 nearby chests: $2",
+  "betterchests_hint_restock": "Restock",
+  "betterchests_restocked": "Restocked $1 items",
+  "betterchests_restock_nothing": "Nothing to restock from these chests",
+  "betterchests_restock_full": "Nothing to restock: you carry no partial stacks",
+  "betterchests_restock_skipped": "$1 chests in use were skipped"
 }

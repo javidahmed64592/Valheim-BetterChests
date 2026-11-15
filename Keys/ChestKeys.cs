@@ -2,6 +2,7 @@ using BepInEx.Configuration;
 
 using BetterChests.Core;
 using BetterChests.Deposit;
+using BetterChests.Restock;
 using BetterChests.Sorting;
 using BetterChests.UI;
 
@@ -24,6 +25,7 @@ internal static class ChestKeys
         PlaceStacks = 2,
         DepositAll = 3,
         Sort = 4,
+        Restock = 5,
     }
 
     private static ConfigEntry<bool> _enabled;
@@ -54,6 +56,12 @@ internal static class ChestKeys
         if (chest == null)
         {
             return false;
+        }
+
+        if (action == Action.Restock)
+        {
+            ChestRestock.Restock(chest, player); // asks for each chest in the group itself
+            return true;
         }
 
         ChestRequests.Request(chest, granted =>
@@ -100,6 +108,10 @@ internal static class ChestKeys
         else if (BetterChestsPlugin._sortKey.Down())
         {
             return Action.Sort;
+        }
+        else if (BetterChestsPlugin._restockKey.Down())
+        {
+            return Action.Restock;
         }
         return Action.None;
     }
@@ -153,7 +165,8 @@ internal static class ChestKeys
             : "\n" + Hint(BetterChestsPlugin._takeAllKey, "$betterchests_hint_take_all")
             + "  " + Hint(BetterChestsPlugin._placeStacksKey, "$betterchests_hint_place_stacks")
             + "\n" + Hint(BetterChestsPlugin._depositAllKey, "$betterchests_deposit_all")
-            + "  " + Hint(BetterChestsPlugin._sortKey, "$betterchests_sort");
+            + "  " + Hint(BetterChestsPlugin._sortKey, "$betterchests_sort")
+            + "\n" + Hint(BetterChestsPlugin._restockKey, "$betterchests_hint_restock");
     }
 
     private static string Hint(Keybind key, string label)

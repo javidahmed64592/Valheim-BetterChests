@@ -16,6 +16,7 @@ Enhances chests with additional features like sorting and auto-depositing!
 | `T`                 | Place stacks: move items, except your hotbar, equipped and marked items, onto matching stacks in the chest. |
 | `F`                 | Deposit all: move everything except your hotbar, equipped and marked items into the chest.                  |
 | `G`                 | Sort the chest.                                                                                             |
+| `Y`                 | Restock: top up every partial stack you carry from the chest and every chest grouped with it.               |
 | `Alt` + Right-click | Mark or unmark an item in your inventory to keep it when depositing all or placing stacks.                  |
 | Mouse wheel         | Change the amount by one when splitting a stack (Shift+click).                                              |
 

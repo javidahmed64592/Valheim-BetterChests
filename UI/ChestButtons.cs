@@ -1,6 +1,7 @@
 using System.Linq;
 
 using BetterChests.Deposit;
+using BetterChests.Restock;
 using BetterChests.Sorting;
 
 using TMPro;
@@ -104,6 +105,10 @@ internal static class ChestButtons
         else if (BetterChestsPlugin._sortKey.Down())
         {
             ChestSort.SortOpenContainer();
+        }
+        else if (BetterChestsPlugin._restockKey.Down())
+        {
+            ChestRestock.Restock(gui.m_currentContainer, Player.m_localPlayer);
         }
     }
 }
