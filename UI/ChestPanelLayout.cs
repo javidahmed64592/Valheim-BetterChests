@@ -64,10 +64,16 @@ internal static class ChestPanelLayout
 
     /// <summary>The button row: its top, from the panel's top, and its height.</summary>
     private const float ButtonRowTop = 38f;
-    private const float ButtonRowHeight = 36f;
+    private const float ButtonRowHeight = 40f;
 
     /// <summary>The smallest a button label shrinks to, to fit five buttons on a narrow chest.</summary>
-    private const float MinLabelSize = 12f;
+    private const float MinLabelSize = 14f;
+
+    /// <summary>
+    /// Space around a button's label. Vanilla leaves 5 pixels on every side, which with five buttons in a row shrank
+    /// the labels more than they need.
+    /// </summary>
+    private static readonly Vector2 LabelPadding = new(4f, 2f);
 
     /// <summary>The right half of the title row, free for the search bar.</summary>
     internal static RectTransform TitleRow { get; private set; }
@@ -102,9 +108,7 @@ internal static class ChestPanelLayout
         title.offsetMin = new Vector2(SidePadding, -TitleRowY - (titleHeight / 2f));
         title.offsetMax = new Vector2(0f, -TitleRowY + (titleHeight / 2f));
         gui.m_containerName.alignment = TextAlignmentOptions.MidlineLeft;
-        gui.m_containerName.enableAutoSizing = true;
-        gui.m_containerName.fontSizeMin = MinLabelSize;
-        gui.m_containerName.fontSizeMax = gui.m_containerName.fontSize;
+        gui.m_containerName.overflowMode = TextOverflowModes.Ellipsis;
 
         GameObject titleRow = new("BetterChests_TitleRow", typeof(RectTransform));
         titleRow.transform.SetParent(_panel, false);
@@ -136,6 +140,9 @@ internal static class ChestPanelLayout
             TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
             if (label != null)
             {
+                RectTransform labelRect = (RectTransform)label.transform;
+                labelRect.offsetMin = LabelPadding;
+                labelRect.offsetMax = -LabelPadding;
                 label.enableAutoSizing = true;
                 label.fontSizeMin = MinLabelSize;
                 label.fontSizeMax = label.fontSize;
