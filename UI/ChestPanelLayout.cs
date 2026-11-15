@@ -1,12 +1,15 @@
 using System.Collections.Generic;
 
+using TMPro;
+
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace BetterChests.UI;
 
 /// <summary>
-/// Makes room in the chest panel for the buttons added under "Take all" and "Place stacks", and makes the panel taller so
+/// Lays out the chest panel: the chest's name and the search bar in a title row, the five buttons in a row under it, and
+/// the grid under them. Also makes the panel taller so
 /// that every row of a big chest fits without scrolling. The panel hangs below the player's inventory and
 /// grows downwards; it stops at the bottom of the screen, beyond which the chest scrolls as normal.
 /// Tall, narrow chests listed in <see cref="WideLayouts"/> are shown with more columns and fewer rows, and the
@@ -53,16 +56,42 @@ internal static class ChestPanelLayout
     /// </summary>
     private static (int Count, int Width, int Columns, float GridWidth) _laidOut;
 
+    /// <summary>Space between the panel's sides and the title row and button row.</summary>
+    private const float SidePadding = 12f;
+
+    /// <summary>The middle of the title row, from the panel's top (where vanilla has the title).</summary>
+    private const float TitleRowY = 22f;
+
+    /// <summary>The height of the title's box: room for vanilla's title font on one line.</summary>
+    private const float TitleHeight = 32f;
+
+    /// <summary>The button row: its top, from the panel's top, and its height.</summary>
+    private const float ButtonRowTop = 48f;
+    private const float ButtonRowHeight = 40f;
+
+    /// <summary>The smallest a button label shrinks to, to fit five buttons on a narrow chest.</summary>
+    private const float MinLabelSize = 14f;
+
     /// <summary>
-    /// Moves the panel's contents so they stay put when the panel grows downwards, and the grid down to
-    /// below <paramref name="buttons"/>.
+    /// Space around a button's label. Vanilla leaves 5 pixels on every side, which with five buttons in a row shrank
+    /// the labels more than they need.
     /// </summary>
-    public static void Setup(InventoryGui gui, RectTransform[] buttons)
+    private static readonly Vector2 LabelPadding = new(4f, 2f);
+
+    /// <summary>The right half of the title row, free for the search bar.</summary>
+    internal static RectTransform TitleRow { get; private set; }
+
+    /// <summary>
+    /// Lays out the top of the panel: the chest's name on the left of the title row (the right half is for the search
+    /// bar), then <paramref name="buttons"/> in one row of equal widths across the panel, then the grid. All of it is
+    /// anchored to the panel's top and sides, so it follows the panel as it grows down and to the right.
+    /// </summary>
+    public static void Setup(InventoryGui gui, Button[] buttons)
     {
         _panel = gui.m_container;
         _grid = gui.m_containerGrid;
         RectTransform gridRect = _grid != null ? (RectTransform)_grid.transform : null;
-        if (_panel == null || gridRect == null || gridRect.parent != _panel)
+        if (_panel == null || gridRect == null || gridRect.parent != _panel || gui.m_containerName == null)
         {
             BetterChestsPlugin._log.LogWarning("Vanilla chest panel layout not as expected, not resizing it.");
             _panel = null;
@@ -73,22 +102,60 @@ internal static class ChestPanelLayout
         _baseHeight = _panel.rect.height;
         _lastSize = -Vector2.one;
 
-        // Pin the header buttons and the scroll bar to the top, and to their side, so the panel can grow under
-        // them and to the right.
-        PinToTop((RectTransform)gui.m_takeAllButton.transform);
-        PinToTop((RectTransform)gui.m_stackAllButton.transform);
-        PinToSide((RectTransform)gui.m_takeAllButton.transform);
-        PinToSide((RectTransform)gui.m_stackAllButton.transform);
-        float vanillaGridTop = -gridRect.offsetMax.y;
-        _gridTop = vanillaGridTop;
-        foreach (RectTransform button in buttons)
+        // The chest's name on the left half of the title row.
+        RectTransform title = (RectTransform)gui.m_containerName.transform;
+        title.anchorMin = new Vector2(0f, 1f);
+        title.anchorMax = new Vector2(0.5f, 1f);
+        title.pivot = new Vector2(0f, 0.5f);
+        // Vanilla's box is shorter than the title's line height and relies on the text overflowing it; a taller box
+        // keeps the name inside it.
+        float titleHeight = Mathf.Max(title.rect.height, TitleHeight);
+        title.offsetMin = new Vector2(SidePadding, -TitleRowY - (titleHeight / 2f));
+        title.offsetMax = new Vector2(0f, -TitleRowY + (titleHeight / 2f));
+        gui.m_containerName.alignment = TextAlignmentOptions.MidlineLeft;
+        gui.m_containerName.textWrappingMode = TextWrappingModes.NoWrap;
+
+        GameObject titleRow = new("BetterChests_TitleRow", typeof(RectTransform));
+        titleRow.transform.SetParent(_panel, false);
+        TitleRow = (RectTransform)titleRow.transform;
+        TitleRow.anchorMin = new Vector2(0.5f, 1f);
+        TitleRow.anchorMax = new Vector2(1f, 1f);
+        TitleRow.pivot = new Vector2(1f, 0.5f);
+        TitleRow.offsetMin = new Vector2(SidePadding, -TitleRowY - 15f);
+        TitleRow.offsetMax = new Vector2(-SidePadding, -TitleRowY + 15f);
+
+        // The buttons, side by side across the panel.
+        GameObject row = new("BetterChests_ButtonRow", typeof(RectTransform));
+        row.transform.SetParent(_panel, false);
+        RectTransform rowRect = (RectTransform)row.transform;
+        rowRect.anchorMin = new Vector2(0f, 1f);
+        rowRect.anchorMax = new Vector2(1f, 1f);
+        rowRect.pivot = new Vector2(0.5f, 1f);
+        rowRect.offsetMin = new Vector2(SidePadding, -(ButtonRowTop + ButtonRowHeight));
+        rowRect.offsetMax = new Vector2(-SidePadding, -ButtonRowTop);
+        HorizontalLayoutGroup layout = row.AddComponent<HorizontalLayoutGroup>();
+        layout.spacing = Gap;
+        layout.childControlWidth = true;
+        layout.childControlHeight = true;
+        layout.childForceExpandWidth = true;
+        layout.childForceExpandHeight = true;
+        foreach (Button button in buttons)
         {
-            PinToTop(button);
-            PinToSide(button);
-            float bottom = -(button.anchoredPosition.y - (button.pivot.y * button.rect.height));
-            _gridTop = Mathf.Max(_gridTop, bottom + Gap);
+            button.transform.SetParent(row.transform, false);
+            TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
+            if (label != null)
+            {
+                RectTransform labelRect = (RectTransform)label.transform;
+                labelRect.offsetMin = LabelPadding;
+                labelRect.offsetMax = -LabelPadding;
+                label.enableAutoSizing = true;
+                label.fontSizeMin = MinLabelSize;
+                label.fontSizeMax = label.fontSize;
+            }
         }
 
+        float vanillaGridTop = -gridRect.offsetMax.y;
+        _gridTop = ButtonRowTop + ButtonRowHeight + (Gap * 2f);
         gridRect.offsetMax = new Vector2(gridRect.offsetMax.x, -_gridTop);
 
         Scrollbar scrollbar = _grid.m_scrollbar;

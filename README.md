@@ -37,19 +37,20 @@ The chest panels have been improved with additional features and better layout h
 
 ### Layout
 
+The chest's name is at the top left, and all the buttons are in one row under it: **Take all**, **Restock**, **Deposit all**, **Place stacks** and **Sort**.
 The chest panel grows taller to show every row of big chests without scrolling, as far as the bottom of the screen.
 The wardrobe is shown as 10 columns by 5 rows instead of 5 by 10, with the panel widened to fit.
 
 ### Deposit All
 
-The open chest gets a **Deposit all** button under **Take all**.
+The open chest gets a **Deposit all** button.
 It moves everything in your inventory into the chest, except your hotbar (the top row of your inventory) and anything you have equipped, so you can empty your bags after an adventure without losing your gear.
 To keep other items too, such as your food, hold **Alt** and right-click them in your inventory.
 **Place stacks** keeps the same items: your hotbar, anything equipped, and marked items.
 
 ### Sort
 
-The open chest gets a **Sort** button under **Place stacks**.
+The open chest gets a **Sort** button.
 Sorting merges partial stacks, then groups related items together, in this order: wood, stone and minerals, ores, metal bars, nails and other metal parts, hides, other creature parts, valuables, other materials, upgrade kits, moulds and casts, seeds, raw meat and fish, crops, cooked food, meads, other consumables, then ammo, weapons, shields, tools, armour, utility items and trophies.
 Within each group, items are ordered by tier, from the earliest biome to the latest. Also:
 

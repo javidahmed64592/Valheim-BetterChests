@@ -13,20 +13,15 @@ using UnityEngine.UI;
 namespace BetterChests.UI;
 
 /// <summary>
-/// The chest panel's extra buttons, "Deposit all" under "Take all" and "Sort" under "Place stacks", and
-/// keys for all four laid out like them: R and T for the top row, F and G for the bottom.
+/// The chest panel's extra buttons ("Deposit all", "Sort" and "Restock", next to vanilla's "Take all" and "Place
+/// stacks"; <see cref="ChestPanelLayout"/> puts all five in a row) and the chest keys.
 /// </summary>
 internal static class ChestButtons
 {
     /// <summary>
-    /// Space between a vanilla button and the new one under it.
+    /// A copy of <paramref name="template"/>, so it matches the vanilla style. The layout places it.
     /// </summary>
-    private const float ButtonGap = 4f;
-
-    /// <summary>
-    /// A copy of <paramref name="template"/>, so it matches the vanilla style, placed under it.
-    /// </summary>
-    private static RectTransform CreateButtonBelow(Button template, string name, string text, UnityAction onClick)
+    private static Button CreateButton(Button template, string name, string text, UnityAction onClick)
     {
         if (template == null || template.transform.parent == null)
         {
@@ -48,10 +43,6 @@ internal static class ChestButtons
             Object.DestroyImmediate(gamePad);
         }
 
-        RectTransform rect = (RectTransform)go.transform;
-        RectTransform templateRect = (RectTransform)template.transform;
-        rect.anchoredPosition = templateRect.anchoredPosition - new Vector2(0f, templateRect.rect.height + ButtonGap);
-
         TMP_Text label = go.GetComponentInChildren<TMP_Text>(true);
         if (label != null)
         {
@@ -64,17 +55,24 @@ internal static class ChestButtons
         Button button = go.GetComponent<Button>();
         button.onClick = new Button.ButtonClickedEvent();
         button.onClick.AddListener(onClick);
-        return rect;
+        return button;
     }
 
-    /// <summary>Adds the Deposit all and Sort buttons when the inventory screen is created.</summary>
+    /// <summary>
+    /// Adds the Deposit all, Sort and Restock buttons when the inventory screen is created, and lays out the row:
+    /// what comes into your inventory (Take all, Restock), what goes into the chest (Deposit all, Place stacks), then
+    /// Sort.
+    /// </summary>
     internal static void CreateButtons(InventoryGui gui)
     {
-        RectTransform depositAll = CreateButtonBelow(gui.m_takeAllButton, "BetterChests_DepositAll", "$betterchests_deposit_all",
+        Button depositAll = CreateButton(gui.m_takeAllButton, "BetterChests_DepositAll", "$betterchests_deposit_all",
             DepositAll.DepositIntoOpenContainer);
-        RectTransform sort = CreateButtonBelow(gui.m_stackAllButton, "BetterChests_Sort", "$betterchests_sort",
+        Button sort = CreateButton(gui.m_stackAllButton, "BetterChests_Sort", "$betterchests_sort",
             ChestSort.SortOpenContainer);
-        ChestPanelLayout.Setup(gui, [.. new[] { depositAll, sort }.Where(b => b != null)]);
+        Button restock = CreateButton(gui.m_takeAllButton, "BetterChests_Restock", "$betterchests_hint_restock",
+            () => ChestRestock.Restock(gui.m_currentContainer, Player.m_localPlayer));
+        ChestPanelLayout.Setup(gui,
+            [.. new[] { gui.m_takeAllButton, restock, depositAll, gui.m_stackAllButton, sort }.Where(b => b != null)]);
     }
 
     /// <summary>
