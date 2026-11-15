@@ -81,7 +81,7 @@ Settings marked "(Synced with server)" use the server's values when the server h
 
 ## Compatibility
 
-- Other chest mods that add sorting, quick stacking or auto storing (such as Quick Stack - Store - Sort - Trash - Restock) overlap with this mod. Their keys may clash with `R`, `T`, `F` and `G` (all can be changed in the config file), and their buttons may overlap on the chest panel.
+- Other chest mods that add sorting, quick stacking or auto storing (such as Quick Stack - Store - Sort - Trash - Restock) overlap with this mod. Their keys may clash with `R`, `T`, `F`, `G` and `Y` (all can be changed in the config file), and their buttons may overlap on the chest panel.
 - This mod has not been tested with a gamepad, only with keyboard and mouse.
 
 ## Uninstalling
