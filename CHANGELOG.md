@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Moved the Harmony patches out of the feature classes into a `Patches` folder, one file per patched game method, like the other mods. No behaviour change.
+
 ## 0.5.0
 
 - Items in an open chest that another chest in its group also holds get a blue frame, so you can spot items worth gathering into one chest.

@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-using HarmonyLib;
-
 using TMPro;
 
 using UnityEngine;
@@ -387,16 +385,12 @@ internal static class KeyHintUI
         return WordBreak.Replace(name, " ");
     }
 
-    [HarmonyPatch(typeof(KeyHints), "UpdateHints")]
-    private static class KeyHints_UpdateHints_Patch
+    /// <summary>After vanilla updates the key hints each frame.</summary>
+    internal static void OnHintsUpdated(KeyHints hints)
     {
-        [HarmonyPostfix]
-        private static void Postfix(KeyHints __instance)
-        {
-            // Drop rows whose HUD was destroyed (it is rebuilt with each world load).
-            RemoveDestroyed();
-            Update(__instance);
-        }
+        // Drop rows whose HUD was destroyed (it is rebuilt with each world load).
+        RemoveDestroyed();
+        Update(hints);
     }
 
     private static void RemoveDestroyed()

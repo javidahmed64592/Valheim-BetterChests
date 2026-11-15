@@ -2,8 +2,6 @@ using System.Collections.Generic;
 
 using BetterChests.Deposit;
 
-using HarmonyLib;
-
 using UnityEngine;
 
 namespace BetterChests.Core;
@@ -161,16 +159,12 @@ internal static class ChestClusters
         return bounds;
     }
 
-    [HarmonyPatch(typeof(Container), "Awake")]
-    private static class Container_Awake_Patch
+    /// <summary>Every container registers itself as it is created (after <c>Container.Awake</c>).</summary>
+    internal static void Register(Container container)
     {
-        [HarmonyPostfix]
-        private static void Postfix(Container __instance)
+        if (container.GetInventory() != null && !Containers.Contains(container))
         {
-            if (__instance.GetInventory() != null && !Containers.Contains(__instance))
-            {
-                Containers.Add(__instance);
-            }
+            Containers.Add(container);
         }
     }
 }

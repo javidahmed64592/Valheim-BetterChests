@@ -3,8 +3,6 @@ using System.Linq;
 using BetterChests.Deposit;
 using BetterChests.Sorting;
 
-using HarmonyLib;
-
 using TMPro;
 
 using UnityEngine;
@@ -68,53 +66,44 @@ internal static class ChestButtons
         return rect;
     }
 
-    [HarmonyPatch(typeof(InventoryGui), "Awake")]
-    private static class InventoryGui_Awake_Patch
+    /// <summary>Adds the Deposit all and Sort buttons when the inventory screen is created.</summary>
+    internal static void CreateButtons(InventoryGui gui)
     {
-        [HarmonyPostfix]
-        private static void Postfix(InventoryGui __instance)
-        {
-            RectTransform depositAll = CreateButtonBelow(__instance.m_takeAllButton, "BetterChests_DepositAll", "$betterchests_deposit_all",
-                DepositAll.DepositIntoOpenContainer);
-            RectTransform sort = CreateButtonBelow(__instance.m_stackAllButton, "BetterChests_Sort", "$betterchests_sort",
-                ChestSort.SortOpenContainer);
-            ChestPanelLayout.Setup(__instance, [.. new[] { depositAll, sort }.Where(b => b != null)]);
-        }
+        RectTransform depositAll = CreateButtonBelow(gui.m_takeAllButton, "BetterChests_DepositAll", "$betterchests_deposit_all",
+            DepositAll.DepositIntoOpenContainer);
+        RectTransform sort = CreateButtonBelow(gui.m_stackAllButton, "BetterChests_Sort", "$betterchests_sort",
+            ChestSort.SortOpenContainer);
+        ChestPanelLayout.Setup(gui, [.. new[] { depositAll, sort }.Where(b => b != null)]);
     }
 
     /// <summary>
-    /// The keys work while a chest is open (and the split dialog isn't).
+    /// The keys work while a chest is open (and the split dialog isn't). Called every frame.
     /// </summary>
-    [HarmonyPatch(typeof(InventoryGui), "Update")]
-    private static class InventoryGui_Update_Patch
+    internal static void HandleKeys(InventoryGui gui)
     {
-        [HarmonyPostfix]
-        private static void Postfix(InventoryGui __instance)
+        if (!InventoryGui.IsVisible()
+            || !gui.IsContainerOpen()
+            || gui.m_splitDialog.IsActive
+            || BetterChestsPlugin.TextInputActive())
         {
-            if (!InventoryGui.IsVisible()
-                || !__instance.IsContainerOpen()
-                || __instance.m_splitDialog.IsActive
-                || BetterChestsPlugin.TextInputActive())
-            {
-                return;
-            }
+            return;
+        }
 
-            if (BetterChestsPlugin._takeAllKey.Down())
-            {
-                __instance.OnTakeAll();
-            }
-            else if (BetterChestsPlugin._depositAllKey.Down())
-            {
-                DepositAll.DepositIntoOpenContainer();
-            }
-            else if (BetterChestsPlugin._placeStacksKey.Down())
-            {
-                __instance.OnStackAll();
-            }
-            else if (BetterChestsPlugin._sortKey.Down())
-            {
-                ChestSort.SortOpenContainer();
-            }
+        if (BetterChestsPlugin._takeAllKey.Down())
+        {
+            gui.OnTakeAll();
+        }
+        else if (BetterChestsPlugin._depositAllKey.Down())
+        {
+            DepositAll.DepositIntoOpenContainer();
+        }
+        else if (BetterChestsPlugin._placeStacksKey.Down())
+        {
+            gui.OnStackAll();
+        }
+        else if (BetterChestsPlugin._sortKey.Down())
+        {
+            ChestSort.SortOpenContainer();
         }
     }
 }

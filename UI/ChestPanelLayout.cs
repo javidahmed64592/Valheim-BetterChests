@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 
-using HarmonyLib;
-
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -227,42 +225,33 @@ internal static class ChestPanelLayout
     }
 
     /// <summary>
-    /// Before vanilla fills the grid, so its first update lays the chest out in the resized panel.
+    /// Before vanilla fills the grid (<c>InventoryGui.UpdateContainer</c>), so its first update lays the chest out in
+    /// the resized panel.
     /// </summary>
-    [HarmonyPatch(typeof(InventoryGui), "UpdateContainer")]
-    private static class InventoryGui_UpdateContainer_Patch
+    internal static void BeforeContainerUpdate(InventoryGui gui)
     {
-        [HarmonyPrefix]
-        private static void Prefix(InventoryGui __instance)
+        if (_panel == null || gui.m_container != _panel)
         {
-            if (_panel == null || __instance.m_container != _panel)
-            {
-                return;
-            }
+            return;
+        }
 
-            Container container = __instance.m_currentContainer;
-            if (container != null && container.GetInventory() != null)
-            {
-                Resize(container, container.GetInventory());
-            }
+        Container container = gui.m_currentContainer;
+        if (container != null && container.GetInventory() != null)
+        {
+            Resize(container, container.GetInventory());
         }
     }
 
     /// <summary>
     /// After vanilla updates the chest's slots, which it lays out in the chest's own width.
     /// </summary>
-    [HarmonyPatch(typeof(InventoryGrid), "UpdateGui")]
-    private static class InventoryGrid_UpdateGui_Patch
+    internal static void OnGridUpdated(InventoryGrid grid)
     {
-        [HarmonyPostfix]
-        private static void Postfix(InventoryGrid __instance)
+        if (_panel == null || grid != _grid || grid.m_inventory == null)
         {
-            if (_panel == null || __instance != _grid || __instance.m_inventory == null)
-            {
-                return;
-            }
-
-            LayOutSlots(__instance);
+            return;
         }
+
+        LayOutSlots(grid);
     }
 }

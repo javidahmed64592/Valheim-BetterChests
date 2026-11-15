@@ -4,8 +4,6 @@ using BepInEx.Configuration;
 
 using BetterChests.Core;
 
-using HarmonyLib;
-
 using UnityEngine;
 
 namespace BetterChests.Deposit;
@@ -191,7 +189,7 @@ internal static class AutoDeposit
     /// <summary>
     /// The chest's owner answered. Returns true if the answer was for a deposit and should not open the chest.
     /// </summary>
-    private static bool OnOpenResponse(Container container, bool granted)
+    internal static bool OnOpenResponse(Container container, bool granted)
     {
         if (!Awaiting.TryGetValue(container, out List<Deposit> waiting))
         {
@@ -483,85 +481,62 @@ internal static class AutoDeposit
         }
     }
 
-    /// <summary>
-    /// The owner's answer to a deposit's request: store the item instead of opening the chest.
-    /// </summary>
-    [HarmonyPatch(typeof(Container), "RPC_OpenResponse")]
-    private static class Container_RPC_OpenResponse_Patch
-    {
-        [HarmonyPrefix]
-        private static bool Prefix(Container __instance, bool granted)
-        {
-            return !OnOpenResponse(__instance, granted);
-        }
-    }
+
 
     /// <summary>
     /// Remembers that the player wants a chest open, so a deposit waiting on the same chest doesn't swallow it.
+    /// Called before <c>Container.Interact</c>.
     /// </summary>
-    [HarmonyPatch(typeof(Container), nameof(Container.Interact))]
-    private static class Container_Interact_Patch
+    internal static void BeforeInteract(Container container, bool hold)
     {
-        [HarmonyPrefix]
-        private static void Prefix(Container __instance, bool hold)
+        if (!hold && Awaiting.ContainsKey(container))
         {
-            if (!hold && Awaiting.ContainsKey(__instance))
-            {
-                _ = OpenedByPlayer.Add(__instance);
-            }
+            _ = OpenedByPlayer.Add(container);
         }
     }
 
     /// <summary>
-    /// Every way of dropping an item from the inventory (dragging it out, Ctrl+click) ends up here. The item
-    /// is dropped as normal; the drop is only marked so <see cref="ItemDrop_DropItem_Patch"/> watches it.
+    /// Every way of dropping an item from the inventory (dragging it out, Ctrl+click) goes through
+    /// <c>Humanoid.DropItem</c>, which calls this first. The item is dropped as normal; the drop is only marked so
+    /// <see cref="OnItemDropped"/> watches it.
     /// </summary>
-    [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.DropItem))]
-    private static class Humanoid_DropItem_Patch
+    internal static void BeforeDrop(Humanoid dropper, Inventory inventory, ItemDrop.ItemData item, int amount)
     {
-        [HarmonyPrefix]
-        private static void Prefix(Humanoid __instance, Inventory inventory, ItemDrop.ItemData item, int amount)
+        _dropper = null;
+        if (_enabled == null || !_enabled.Value
+            || dropper != Player.m_localPlayer
+            || item == null || amount <= 0 || item.m_shared.m_questItem)
         {
-            _dropper = null;
-            if (_enabled == null || !_enabled.Value
-                || __instance != Player.m_localPlayer
-                || item == null || amount <= 0 || item.m_shared.m_questItem)
-            {
-                return;
-            }
-
-            Player player = Player.m_localPlayer;
-            inventory ??= player.GetInventory();
-
-            // Items dragged out of a chest are dropped as normal; storing them would put them straight back.
-            if (inventory == player.GetInventory() && inventory.ContainsItem(item))
-            {
-                _dropper = player;
-            }
+            return;
         }
 
-        [HarmonyFinalizer]
-        private static void Finalizer()
+        Player player = Player.m_localPlayer;
+        inventory ??= player.GetInventory();
+
+        // Items dragged out of a chest are dropped as normal; storing them would put them straight back.
+        if (inventory == player.GetInventory() && inventory.ContainsItem(item))
         {
-            _dropper = null;
+            _dropper = player;
         }
     }
 
-    /// <summary>
-    /// Creates the item that <see cref="Humanoid.DropItem"/> throws. (Not <c>ItemDrop.OnPlayerDrop</c>, which
-    /// is so small that the game's JIT inlines it into the caller, so a patch on it never runs.)
-    /// </summary>
-    [HarmonyPatch(typeof(ItemDrop), nameof(ItemDrop.DropItem))]
-    private static class ItemDrop_DropItem_Patch
+    /// <summary>After <c>Humanoid.DropItem</c>, even if it failed.</summary>
+    internal static void AfterDrop()
     {
-        [HarmonyPostfix]
-        private static void Postfix(ItemDrop __result)
+        _dropper = null;
+    }
+
+    /// <summary>
+    /// After <c>ItemDrop.DropItem</c> creates the item that <c>Humanoid.DropItem</c> throws. (Not
+    /// <c>ItemDrop.OnPlayerDrop</c>, which is so small that the game's JIT inlines it into the caller, so a patch on it
+    /// never runs.)
+    /// </summary>
+    internal static void OnItemDropped(ItemDrop dropped)
+    {
+        if (_dropper != null && dropped != null)
         {
-            if (_dropper != null && __result != null)
-            {
-                PendingDeposit.Watch(__result, _dropper);
-                _dropper = null;
-            }
+            PendingDeposit.Watch(dropped, _dropper);
+            _dropper = null;
         }
     }
 }

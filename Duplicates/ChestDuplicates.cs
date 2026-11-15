@@ -1,15 +1,11 @@
 using System.Collections.Generic;
 using System.Globalization;
-using System.Reflection;
-using System.Reflection.Emit;
 
 using BepInEx.Configuration;
 
 using BetterChests.Core;
 using BetterChests.Deposit;
 using BetterChests.UI;
-
-using HarmonyLib;
 
 using UnityEngine;
 
@@ -191,7 +187,7 @@ internal static class ChestDuplicates
     /// Stands in for <c>InventoryGrid.CreateItemTooltip</c>, which vanilla calls every frame for the hovered
     /// item: the tooltip also says which nearby chests hold the item, and the item is remembered for the glow.
     /// </summary>
-    private static void CreateItemTooltip(InventoryGrid grid, ItemDrop.ItemData item, UITooltip tooltip)
+    internal static void CreateItemTooltip(InventoryGrid grid, ItemDrop.ItemData item, UITooltip tooltip)
     {
         string text = item.GetTooltip();
         InventoryGui gui = InventoryGui.instance;
@@ -231,7 +227,7 @@ internal static class ChestDuplicates
     /// <summary>
     /// Makes the chests holding the hovered item glow, and stops the rest.
     /// </summary>
-    private static void UpdateGlow(InventoryGui gui)
+    internal static void UpdateGlow(InventoryGui gui)
     {
         GlowTargets.Clear();
         List<Container> chests = _hoverFrame == Time.frameCount && _hoverItem != null && InventoryGui.IsVisible()
@@ -277,72 +273,31 @@ internal static class ChestDuplicates
         }
     }
 
-    [HarmonyPatch(typeof(InventoryGrid), "UpdateGui")]
-    private static class InventoryGrid_UpdateGui_Patch
+    /// <summary>
+    /// Frames the open chest's items that other chests in its group also hold. Called after
+    /// <c>InventoryGrid.UpdateGui</c>.
+    /// </summary>
+    internal static void OnGridUpdated(InventoryGrid grid)
     {
-        private static readonly MethodInfo Original = AccessTools.Method(typeof(InventoryGrid), "CreateItemTooltip");
-        private static readonly MethodInfo Replacement = AccessTools.Method(typeof(ChestDuplicates), nameof(CreateItemTooltip));
-
-        /// <summary>
-        /// Calls <see cref="CreateItemTooltip"/> instead of the vanilla method, which takes the
-        /// same arguments (the grid, then the item and tooltip).
-        /// </summary>
-        [HarmonyTranspiler]
-        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        InventoryGui gui = InventoryGui.instance;
+        if (gui == null || grid != gui.m_containerGrid)
         {
-            int replaced = 0;
-            foreach (CodeInstruction instruction in instructions)
-            {
-                if (instruction.Calls(Original))
-                {
-                    replaced++;
-                    yield return new CodeInstruction(OpCodes.Call, Replacement).MoveLabelsFrom(instruction).MoveBlocksFrom(instruction);
-                    continue;
-                }
-
-                yield return instruction;
-            }
-
-            if (replaced == 0)
-            {
-                BetterChestsPlugin._log.LogWarning("InventoryGrid.UpdateGui not as expected: tooltips will not list nearby chests.");
-            }
+            return;
         }
 
-        /// <summary>
-        /// Frames the open chest's items that other chests in its group also hold.
-        /// </summary>
-        [HarmonyPostfix]
-        private static void Postfix(InventoryGrid __instance)
+        bool enabled = _enabled.Value;
+        if (enabled)
         {
-            InventoryGui gui = InventoryGui.instance;
-            if (gui == null || __instance != gui.m_containerGrid)
-            {
-                return;
-            }
+            Refresh(gui);
+        }
 
-            bool enabled = _enabled.Value;
-            if (enabled)
-            {
-                Refresh(gui);
-            }
-
-            foreach (InventoryElement element in __instance.m_elements)
-            {
-                ItemDrop.ItemData item = __instance.m_inventory.GetItemAt(element.Position.x, element.Position.y);
-                bool show = enabled && item != null && GroupItems.Contains(item.m_shared.m_name);
-                SlotFrame.Show(element, FrameName, FrameColour, show);
-            }
+        foreach (InventoryElement element in grid.m_elements)
+        {
+            ItemDrop.ItemData item = grid.m_inventory.GetItemAt(element.Position.x, element.Position.y);
+            bool show = enabled && item != null && GroupItems.Contains(item.m_shared.m_name);
+            SlotFrame.Show(element, FrameName, FrameColour, show);
         }
     }
 
-    [HarmonyPatch(typeof(InventoryGui), "Update")]
-    private static class InventoryGui_Update_Patch
-    {
-        [HarmonyPostfix]
-        private static void Postfix(InventoryGui __instance)
-        {
-            UpdateGlow(__instance);
-        }
-    }
+
 }

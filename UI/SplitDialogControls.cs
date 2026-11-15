@@ -1,5 +1,3 @@
-using HarmonyLib;
-
 using TMPro;
 
 using UnityEngine;
@@ -109,32 +107,24 @@ internal static class SplitDialogControls
         button.onClick.AddListener(() => Step(dialog, delta));
     }
 
-    [HarmonyPatch(typeof(InventoryGui), "Awake")]
-    private static class InventoryGui_Awake_Patch
+    /// <summary>Adds the - and + buttons to the split dialog when the inventory screen is created.</summary>
+    internal static void OnGuiAwake(InventoryGui gui)
     {
-        [HarmonyPostfix]
-        private static void Postfix(InventoryGui __instance)
+        if (gui.m_splitDialog != null)
         {
-            if (__instance.m_splitDialog != null)
-            {
-                CreateButtons(__instance.m_splitDialog);
-            }
+            CreateButtons(gui.m_splitDialog);
         }
     }
 
     /// <summary>
-    /// Runs every frame while the inventory is open; the vanilla method does nothing unless the dialog is.
+    /// After <c>InventoryGui.UpdateSplitDialog</c>, which runs every frame while the inventory is open but does
+    /// nothing unless the dialog is.
     /// </summary>
-    [HarmonyPatch(typeof(InventoryGui), "UpdateSplitDialog")]
-    private static class InventoryGui_UpdateSplitDialog_Patch
+    internal static void OnSplitDialogUpdate(InventoryGui gui)
     {
-        [HarmonyPostfix]
-        private static void Postfix(InventoryGui __instance)
+        if (gui.m_splitDialog.m_splitSlider.gameObject.activeInHierarchy)
         {
-            if (__instance.m_splitDialog.m_splitSlider.gameObject.activeInHierarchy)
-            {
-                HandleScroll(__instance.m_splitDialog);
-            }
+            HandleScroll(gui.m_splitDialog);
         }
     }
 }
