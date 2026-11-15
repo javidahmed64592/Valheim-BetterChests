@@ -19,9 +19,9 @@ Enhances chests with additional features like sorting and auto-depositing!
 | `Alt` + Right-click | Mark or unmark an item in your inventory to keep it when depositing all or placing stacks.              |
 | Mouse wheel         | Change the amount by one when splitting a stack (Shift+click).                                          |
 
-The chest keys (`R`, `T`, `F` and `G`) work with the chest open, or just while looking at it, without opening it.
-The chest's hover text shows them.
-They work on the same chests as opening them: not other players' private chests, chests inside someone else's ward, or a chest another player has open.
+The chest keys work with the chest open, or just while looking at it.
+
+![Chest Key Hints](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/game_screenshot_3.png)
 
 ## Auto Deposit
 
