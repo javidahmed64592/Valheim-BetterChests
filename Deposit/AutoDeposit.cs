@@ -69,10 +69,6 @@ internal static class AutoDeposit
         return new ConfigurationManagerAttributes { IsAdminOnly = true };
     }
 
-    /// <summary>
-    /// How long to wait for a chest's owner to answer before giving up on that chest.
-    /// </summary>
-    private const float RequestTimeout = 5f;
 
     /// <summary>
     /// A dropped item on its way into a group of chests, one chest at a time.
@@ -87,18 +83,9 @@ internal static class AutoDeposit
         public Quaternion Rotation;
         public string ItemName;
         public int Stored;
-        public float AskedAt;
     }
 
-    /// <summary>
-    /// Deposits waiting for a chest's owner to hand the chest over.
-    /// </summary>
-    private static readonly Dictionary<Container, List<Deposit>> Awaiting = [];
 
-    /// <summary>
-    /// Chests the player has asked to open themselves while a deposit was waiting on them.
-    /// </summary>
-    private static readonly HashSet<Container> OpenedByPlayer = [];
 
     /// <summary>
     /// Starts storing the dropped item in the chests it landed near.
@@ -166,78 +153,20 @@ internal static class AutoDeposit
                 continue;
             }
 
-            ForgetStaleRequests();
-            deposit.AskedAt = Time.time;
-            if (Awaiting.TryGetValue(container, out List<Deposit> waiting))
+            ChestRequests.Request(container, granted =>
             {
-                waiting.Add(deposit); // the chest's owner has already been asked
-                return;
-            }
-
-            // Listed before asking: when this player owns the chest, the answer arrives during the call.
-            Awaiting[container] = [deposit];
-            container.m_nview.InvokeRPC("RPC_RequestOpen", Game.instance.GetPlayerProfile().GetPlayerID());
+                if (granted)
+                {
+                    DepositInto(container, deposit);
+                }
+                Next(deposit);
+            });
             return;
         }
 
         if (deposit.Stored <= 0)
         {
             Log(deposit.ItemName, "the chests near it are full or in use");
-        }
-    }
-
-    /// <summary>
-    /// The chest's owner answered. Returns true if the answer was for a deposit and should not open the chest.
-    /// </summary>
-    internal static bool OnOpenResponse(Container container, bool granted)
-    {
-        if (!Awaiting.TryGetValue(container, out List<Deposit> waiting))
-        {
-            return false;
-        }
-
-        _ = Awaiting.Remove(container);
-        foreach (Deposit deposit in waiting)
-        {
-            if (granted && container.m_nview.IsValid() && container.IsOwner())
-            {
-                DepositInto(container, deposit);
-            }
-            Next(deposit);
-        }
-
-        // If the player also asked to open the chest, let the answer open it as usual.
-        return !OpenedByPlayer.Remove(container);
-    }
-
-    /// <summary>
-    /// Gives up on chests whose owner never answered (for example, they left), moving on to the next chest.
-    /// </summary>
-    private static void ForgetStaleRequests()
-    {
-        List<Container> stale = null;
-        foreach (KeyValuePair<Container, List<Deposit>> entry in Awaiting)
-        {
-            if (entry.Key == null || entry.Value.TrueForAll(d => Time.time - d.AskedAt > RequestTimeout))
-            {
-                (stale ??= []).Add(entry.Key);
-            }
-        }
-
-        if (stale == null)
-        {
-            return;
-        }
-
-        foreach (Container container in stale)
-        {
-            List<Deposit> waiting = Awaiting[container];
-            _ = Awaiting.Remove(container);
-            _ = OpenedByPlayer.Remove(container);
-            foreach (Deposit deposit in waiting)
-            {
-                Next(deposit);
-            }
         }
     }
 
@@ -482,18 +411,6 @@ internal static class AutoDeposit
     }
 
 
-
-    /// <summary>
-    /// Remembers that the player wants a chest open, so a deposit waiting on the same chest doesn't swallow it.
-    /// Called before <c>Container.Interact</c>.
-    /// </summary>
-    internal static void BeforeInteract(Container container, bool hold)
-    {
-        if (!hold && Awaiting.ContainsKey(container))
-        {
-            _ = OpenedByPlayer.Add(container);
-        }
-    }
 
     /// <summary>
     /// Every way of dropping an item from the inventory (dragging it out, Ctrl+click) goes through
