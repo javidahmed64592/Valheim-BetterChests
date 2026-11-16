@@ -4,53 +4,83 @@
 
 # BetterChests
 
-Enhances chests with additional features like sorting and auto-depositing!
+Chests standing together form a group you can use as one: search it, deposit into it and restock from it with a redesigned chest panel and keys, plus auto deposit and smarter sorting.
 
 ![Chest Interface](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/game_screenshot_1.png)
 
-![Split Stack Window](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/game_screenshot_2.png)
+## Chest Groups
 
-| Configurable Key    | Action                                                                                                      |
-| ------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `R`                 | Take all: move everything in the chest into your inventory.                                                 |
-| `T`                 | Place stacks: move items, except your hotbar, equipped and marked items, onto matching stacks in the chest. |
-| `F`                 | Deposit all: move everything except your hotbar, equipped and marked items into the chest.                  |
-| `G`                 | Sort the chest.                                                                                             |
-| `Y`                 | Restock: top up every partial stack you carry from the chest and every chest grouped with it.               |
-| `Alt` + Right-click | Mark or unmark an item in your inventory to keep it when depositing all or placing stacks.                  |
-| Mouse wheel         | Change the amount by one when splitting a stack (Shift+click).                                              |
+Chests standing close together form a **group**, such as a row, a wall or a stack of chests.
+A chest joins a group when it is within a metre of any chest already in it (the `Cluster Gap` setting), so a group can run the length of a storage room.
 
-The chest keys work with the chest open, or just while looking at it.
+Only chests you could open yourself are used: not other players' private chests or chests inside someone else's ward.
+A chest another player has open is skipped until they close it.
+
+Everything in the mod is built on groups:
+
+- **Search** the whole group from any chest in it, and take, use, deposit or gather items across it.
+- **Restock** your partial stacks from the whole group.
+- **Auto deposit** items you drop into the group, next to the same items.
+- **Duplicates** shows which items are spread over several chests in the group.
+
+## The Chest Panel
+
+The open chest's name is at the top left, with the search bar beside it, and the five buttons are in one row underneath.
+The panel grows taller to show every row of big chests without scrolling, as far as the bottom of the screen, and the wardrobe is shown as 10 columns by 5 rows instead of 5 by 10.
+
+### Buttons and Keys
+
+Every button has a key, shown in the key hints at the bottom of the screen and in a chest's hover text.
+The keys also work while just looking at a chest, without opening it.
+While you search, the buttons work on the whole group instead of the open chest.
+
+| Button       | Key | On the open chest                                                           | While searching the group                                                                                   |
+| ------------ | --- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Take all     | `R` | Moves everything in the chest into your inventory.                          | Takes every stack the search shows.                                                                         |
+| Restock      | `Y` | Tops up every partial stack you carry from the whole group.                 | The same.                                                                                                   |
+| Deposit all  | `F` | Moves everything you carry into the chest, except kept items (see below).   | Puts each item in the chests that already hold it, topping up their stacks first, and the rest in this one. |
+| Place stacks | `T` | Tops up stacks already in the chest with what you carry, except kept items. | Tops up stacks anywhere in the group with the items you carry that match the search.                        |
+| Sort         | `G` | Sorts the chest.                                                            | Gathers each item the search shows into the chest holding the most of it, then sorts that chest.            |
+
+All the keys can be changed in the config file.
 
 ![Chest Key Hints](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/game_screenshot_3.png)
 
+### Search
+
+Type in the search bar to search the open chest and every chest grouped with it.
+While you type, the chest's grid shows every matching item from the whole group, as if it were one chest, in sort order:
+
+- Click an item to take that stack into your inventory, straight from the chest it is in.
+- Right-click it to eat or drink it from that chest, or to take it and equip it.
+- Drag an item from your inventory onto the results, or Ctrl + click it in your inventory, to put it in the chests that already hold that item (the same way as **Deposit all**).
+
+Clear the search to see the open chest again. Closing the chest empties the search.
+
+### Keeping Items
+
+**Deposit all** and **Place stacks** never move your hotbar (the top row of your inventory) or anything you have equipped, so you can empty your bags after an adventure without losing your gear.
+To keep other items too, such as your food, hold `Alt` and right-click them in your inventory to mark them. Marked items get a frame; do the same again to unmark them.
+
+### Duplicates
+
+Items in the open chest that another chest in its group also holds get a blue frame, so you can see what could be gathered into one chest (searching for it and pressing **Sort** does that).
+Hovering over an item in the chest makes the other chests in the group that hold it glow, and its tooltip says how many of them there are and how much they hold.
+Hovering over an item in your inventory does the same for every chest group within auto deposit range of you, so you know where to take it.
+
+### Split Stack
+
+The split stack dialog (Shift + click a stack) gets **-** and **+** buttons either side of the slider to change the amount by one, and so does the mouse wheel.
+This works in your inventory as well as in chests.
+
+![Split Stack Window](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/game_screenshot_2.png)
+
 ## Auto Deposit
 
-Chests standing close together form a group, such as a row or a stack of chests.
-Dropping an item near any chest in a group stores it in them, prioritising chests which already contain that item.
+Drop an item near any chest in a group, and it is stored in the group: in a chest that already holds that item if there is one, otherwise in any chest with room.
 
-Only chests you could open yourself are used: not private chests of other players, chests inside someone else's ward, or chests another player has open.
+## Sorting
 
-## Chest Panel
-
-The chest panels have been improved with additional features and better layout handling.
-
-### Layout
-
-The chest's name is at the top left, and all the buttons are in one row under it: **Take all**, **Restock**, **Deposit all**, **Place stacks** and **Sort**.
-The chest panel grows taller to show every row of big chests without scrolling, as far as the bottom of the screen.
-The wardrobe is shown as 10 columns by 5 rows instead of 5 by 10, with the panel widened to fit.
-
-### Deposit All
-
-The open chest gets a **Deposit all** button.
-It moves everything in your inventory into the chest, except your hotbar (the top row of your inventory) and anything you have equipped, so you can empty your bags after an adventure without losing your gear.
-To keep other items too, such as your food, hold **Alt** and right-click them in your inventory.
-**Place stacks** keeps the same items: your hotbar, anything equipped, and marked items.
-
-### Sort
-
-The open chest gets a **Sort** button.
 Sorting merges partial stacks, then groups related items together, in this order: wood, stone and minerals, ores, metal bars, nails and other metal parts, hides, other creature parts, valuables, other materials, upgrade kits, moulds and casts, seeds, raw meat and fish, crops, cooked food, meads, other consumables, then ammo, weapons, shields, tools, armour, utility items and trophies.
 Within each group, items are ordered by tier, from the earliest biome to the latest. Also:
 
@@ -63,17 +93,6 @@ Within each group, items are ordered by tier, from the earliest biome to the lat
 - Meads are grouped by what they do (health, stamina, eitr, each resistance, then the rest), then by tier, with their bases first.
 
 Items from other mods are sorted the same way, by what the game says they are and where they come from.
-
-### Duplicates
-
-Items in the open chest that another chest in its group also holds get a blue frame, so you can see what could be gathered into one chest.
-Hovering over an item in the chest makes the other chests in the group that hold it glow, and its tooltip says how many of them there are and how much they hold.
-Hovering over an item in your inventory does the same for every chest in the groups within auto deposit range of you, so you know where to take it.
-
-### Split Stack
-
-The split stack dialog gets **-** and **+** buttons either side of the slider to change the amount by one, and so does the mouse wheel.
-These features are also available when splitting stacks in your inventory.
 
 ## Configuration
 

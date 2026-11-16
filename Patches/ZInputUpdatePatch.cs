@@ -1,5 +1,6 @@
 using BetterChests.Core;
 using BetterChests.Keys;
+using BetterChests.Search;
 
 using HarmonyLib;
 
@@ -15,7 +16,8 @@ internal static class ZInput_Update_Patch
 {
     private static void Postfix()
     {
-        if (ChestKeys.TryUse())
+        // Typing in the chest search bar: E would otherwise close the inventory, the number keys use hotbar items…
+        if (ChestSearch.Focused || ChestKeys.TryUse())
         {
             KeyInput.CancelButtonsPressedThisFrame();
         }

@@ -1,6 +1,6 @@
 {
   "name": "BetterChests",
-  "description": "Enhances chests with additional features like sorting and auto-depositing!",
+  "description": "Chests standing together form a group you can use as one: search it, deposit into it and restock from it with a redesigned chest panel and keys, plus auto deposit and smarter sorting.",
   "version_number": "0.5.0",
   "dependencies": [
     "denikson-BepInExPack_Valheim-5.4.2360",
