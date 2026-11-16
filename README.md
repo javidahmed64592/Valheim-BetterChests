@@ -45,7 +45,7 @@ The wardrobe is shown as 10 columns by 5 rows instead of 5 by 10, with the panel
 
 Type in the search bar at the top right of the chest panel to search the open chest and every chest grouped with it.
 While you type, the chest's grid shows every matching item from the whole group, as if it were one chest, in sort order.
-Click an item to take that stack into your inventory, straight from the chest it is in.
+Click an item to take that stack into your inventory, straight from the chest it is in, or right-click it to eat or drink it from that chest, or to equip it.
 While searching, the chest's buttons work on the whole group:
 
 - **Take all** takes every stack the search shows.

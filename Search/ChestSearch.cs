@@ -215,10 +215,85 @@ internal static class ChestSearch
         return true;
     }
 
-    /// <summary>A right-click on the view would use the copy (eat it, equip it); it does nothing instead.</summary>
-    internal static bool IsResultsGrid(InventoryGui gui, InventoryGrid grid)
+    /// <summary>
+    /// A right-click on the chest grid (before <c>InventoryGui.OnRightClickItem</c>). While searching, it uses the real
+    /// item in its real chest, never the copy shown (see <see cref="Use"/>). True if handled here, so vanilla should
+    /// skip it.
+    /// </summary>
+    internal static bool TryHandleRightClick(InventoryGui gui, InventoryGrid grid, ItemDrop.ItemData item)
     {
-        return Active && grid == gui.m_containerGrid;
+        if (!Active || grid != gui.m_containerGrid)
+        {
+            return false;
+        }
+        if (item != null && Sources.TryGetValue(item, out (Container Chest, ItemDrop.ItemData Item) source))
+        {
+            Use(source.Chest, source.Item);
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Eats or drinks a food or mead straight from its chest, as right-clicking it in that chest would. Gear can only be
+    /// equipped from the player's inventory, so it comes into the inventory first and is then equipped (ammo that joins
+    /// a stack already carried equips that stack).
+    /// </summary>
+    private static void Use(Container chest, ItemDrop.ItemData item)
+    {
+        Player player = Player.m_localPlayer;
+        if (chest == null || player == null)
+        {
+            return;
+        }
+
+        ChestRequests.Request(chest, granted =>
+        {
+            Inventory from = chest.GetInventory();
+            if (!granted)
+            {
+                player.Message(MessageHud.MessageType.Center, "$msg_inuse");
+            }
+            else if (from != null && from.ContainsItem(item))
+            {
+                if (item.m_shared.m_itemType == ItemDrop.ItemData.ItemType.Consumable)
+                {
+                    player.UseItem(from, item, true);
+                }
+                else if (item.IsEquipable())
+                {
+                    Inventory carried = player.GetInventory();
+                    carried.MoveItemToThis(from, item);
+                    // A stackable item (ammo) may have joined a stack already carried; anything else must have come
+                    // across itself (it doesn't if the inventory is full), so a different piece is never equipped.
+                    ItemDrop.ItemData equip = null;
+                    if (carried.ContainsItem(item))
+                    {
+                        equip = item;
+                    }
+                    else if (item.m_shared.m_maxStackSize > 1 && !from.ContainsItem(item))
+                    {
+                        equip = FindSameType(carried, item);
+                    }
+                    if (equip != null && !player.IsItemEquiped(equip))
+                    {
+                        player.UseItem(carried, equip, true);
+                    }
+                }
+            }
+            _nextRefresh = 0f;
+        });
+    }
+
+    private static ItemDrop.ItemData FindSameType(Inventory inventory, ItemDrop.ItemData item)
+    {
+        foreach (ItemDrop.ItemData candidate in inventory.GetAllItems())
+        {
+            if (candidate.IsSameType(item))
+            {
+                return candidate;
+            }
+        }
+        return null;
     }
 
     private static void Take(Container chest, ItemDrop.ItemData item)
