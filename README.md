@@ -33,7 +33,7 @@ The panel grows taller to show every row of big chests without scrolling, as far
 ### Buttons and Keys
 
 Every button has a key, shown in the key hints at the bottom of the screen and in a chest's hover text.
-The keys also work while just looking at a chest, without opening it.
+The keys also work while just looking at a chest, without opening it, and a message says what moved.
 While you search, the buttons work on the whole group instead of the open chest.
 
 | Button       | Key | On the open chest                                                           | While searching the group                                                                                   |
@@ -54,8 +54,10 @@ Type in the search bar to search the open chest and every chest grouped with it.
 While you type, the chest's grid shows every matching item from the whole group, as if it were one chest, in sort order:
 
 - Click an item to take that stack into your inventory, straight from the chest it is in.
+- Shift + click it to split the stack, and take only part of it.
 - Right-click it to eat or drink it from that chest, or to take it and equip it.
 - Drag an item from your inventory onto the results, or Ctrl + click it in your inventory, to put it in the chests that already hold that item (the same way as **Deposit all**).
+- Click the red cross at the end of the search bar to clear it.
 
 ![Search](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/search.png)
 

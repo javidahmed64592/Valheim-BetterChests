@@ -125,31 +125,56 @@ internal static class ChestKeys
         }
 
         Inventory inventory = chest.GetInventory();
-        bool changed;
+        int before = Count(inventory);
+        string token;
         switch (action)
         {
             case Action.TakeAll:
-                int before = inventory.NrOfItems();
                 player.GetInventory().MoveAll(inventory);
-                changed = inventory.NrOfItems() != before;
+                token = "$betterchests_took";
                 break;
             case Action.PlaceStacks:
-                changed = inventory.StackAll(player.GetInventory(), message: true) > 0;
+                // Our own message below, so not vanilla's as well.
+                _ = inventory.StackAll(player.GetInventory(), message: false);
+                token = "$betterchests_placed";
                 break;
             case Action.DepositAll:
-                changed = DepositAll.DepositInto(chest, player);
+                _ = DepositAll.DepositInto(chest, player);
+                token = "$betterchests_deposited";
                 break;
             case Action.Sort:
                 ChestSort.SortContainer(chest);
-                changed = true;
-                break;
+                Feedback(player, Localization.instance.Localize("$betterchests_sorted", Localization.instance.Localize(chest.GetHoverName())), true);
+                return;
             default:
                 return;
         }
 
-        if (changed && InventoryGui.instance != null)
+        // With the chest closed there is nothing to see, so say what moved, and play the move sound where the player
+        // can hear it.
+        int moved = System.Math.Abs(Count(inventory) - before);
+        string text = moved > 0
+            ? Localization.instance.Localize(token, moved.ToString(System.Globalization.CultureInfo.InvariantCulture), Localization.instance.Localize(chest.GetHoverName()))
+            : Localization.instance.Localize("$betterchests_nothing_moved");
+        Feedback(player, text, moved > 0);
+    }
+
+    private static int Count(Inventory inventory)
+    {
+        int count = 0;
+        foreach (ItemDrop.ItemData item in inventory.GetAllItems())
         {
-            _ = InventoryGui.instance.m_moveItemEffects.Create(chest.transform.position, Quaternion.identity);
+            count += item.m_stack;
+        }
+        return count;
+    }
+
+    private static void Feedback(Player player, string text, bool sound)
+    {
+        player.Message(MessageHud.MessageType.Center, text);
+        if (sound && InventoryGui.instance != null)
+        {
+            _ = InventoryGui.instance.m_moveItemEffects.Create(player.transform.position, Quaternion.identity);
         }
     }
 

@@ -27,6 +27,11 @@ internal static class ChestSearch
     private static readonly Vector2 TextPadding = new(8f, 2f);
 
     private static InputField _field;
+    private static GameObject _clear;
+
+    /// <summary>The clear button's width and height, at the right end of the search bar.</summary>
+    private const float ClearButtonSize = 22f;
+    private static readonly Color ClearColour = new(0.85f, 0.2f, 0.15f);
     private static Inventory _view;
     private static float _nextRefresh;
 
@@ -79,6 +84,9 @@ internal static class ChestSearch
 
         _field = field.GetComponent<InputField>();
         _field.characterLimit = 40;
+        _clear = CreateClearButton(field.transform);
+        _field.onValueChanged.AddListener(text => _clear.SetActive(text.Length > 0));
+        _clear.SetActive(false);
 
         // Unity's input field insets its text by 6-7 pixels top and bottom, leaving less than a line of text in the
         // title row; legacy text that doesn't fit draws nothing, so neither the placeholder nor the typing showed.
@@ -92,11 +100,41 @@ internal static class ChestSearch
             textRect.anchorMin = Vector2.zero;
             textRect.anchorMax = Vector2.one;
             textRect.offsetMin = TextPadding;
-            textRect.offsetMax = -TextPadding;
+            textRect.offsetMax = new Vector2(-TextPadding.x - ClearButtonSize, -TextPadding.y); // room for the cross
             text.verticalOverflow = VerticalWrapMode.Overflow;
             text.alignment = TextAnchor.MiddleLeft;
         }
         _field.onValueChanged.AddListener(_ => _nextRefresh = 0f);
+    }
+
+    /// <summary>A red cross at the right end of the search bar that empties it. Shown only while something is typed.</summary>
+    private static GameObject CreateClearButton(Transform field)
+    {
+        GameObject clear = new("BetterChests_ClearSearch", typeof(RectTransform), typeof(Text), typeof(Button));
+        clear.transform.SetParent(field, false);
+        RectTransform rect = (RectTransform)clear.transform;
+        rect.anchorMin = new Vector2(1f, 0.5f);
+        rect.anchorMax = new Vector2(1f, 0.5f);
+        rect.pivot = new Vector2(1f, 0.5f);
+        rect.sizeDelta = new Vector2(ClearButtonSize, ClearButtonSize);
+        rect.anchoredPosition = new Vector2(-4f, 0f);
+
+        Text cross = clear.GetComponent<Text>();
+        cross.font = GUIManager.Instance.AveriaSerifBold;
+        cross.fontSize = 20;
+        cross.fontStyle = FontStyle.Bold;
+        cross.alignment = TextAnchor.MiddleCenter;
+        cross.color = ClearColour;
+        cross.text = "\u00D7"; // ×
+
+        Button button = clear.GetComponent<Button>();
+        button.targetGraphic = cross;
+        button.onClick.AddListener(() =>
+        {
+            _field.text = "";
+            _field.DeactivateInputField();
+        });
+        return clear;
     }
 
     /// <summary>Empties the search when a chest is closed or another one is opened.</summary>
@@ -105,6 +143,10 @@ internal static class ChestSearch
         if (_field != null && _field.text.Length > 0)
         {
             _field.SetTextWithoutNotify("");
+        }
+        if (_clear != null)
+        {
+            _clear.SetActive(false);
         }
         _view = null;
         Sources.Clear();
@@ -210,9 +252,36 @@ internal static class ChestSearch
         }
         else if (item != null && Sources.TryGetValue(item, out (Container Chest, ItemDrop.ItemData Item) source))
         {
-            Take(source.Chest, source.Item);
+            if (mod == InventoryGrid.Modifier.Split && source.Item.m_stack > 1)
+            {
+                Split(gui, source.Chest, source.Item);
+            }
+            else
+            {
+                Take(source.Chest, source.Item);
+            }
         }
         return true;
+    }
+
+    /// <summary>
+    /// Shift + click on a result: vanilla's split dialog for the real stack in its real chest. The amount chosen is then
+    /// dragged from that chest by vanilla, as if the chest were open, so the copy shown is never involved.
+    /// </summary>
+    private static void Split(InventoryGui gui, Container chest, ItemDrop.ItemData item)
+    {
+        ChestRequests.Request(chest, granted =>
+        {
+            Inventory from = chest.GetInventory();
+            if (!granted)
+            {
+                Player.m_localPlayer?.Message(MessageHud.MessageType.Center, "$msg_inuse");
+            }
+            else if (from != null && from.ContainsItem(item) && gui != null)
+            {
+                gui.ShowSplitDialog(item, from);
+            }
+        });
     }
 
     /// <summary>
