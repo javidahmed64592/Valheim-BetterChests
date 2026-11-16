@@ -40,7 +40,7 @@ While you search, the buttons work on the whole group instead of the open chest.
 | Restock      | `Y` | Tops up every partial stack you carry from the whole group.                 | The same.                                                                                                   |
 | Deposit all  | `F` | Moves everything you carry into the chest, except kept items (see below).   | Puts each item in the chests that already hold it, topping up their stacks first, and the rest in this one. |
 | Place stacks | `T` | Tops up stacks already in the chest with what you carry, except kept items. | Tops up stacks anywhere in the group with the items you carry that match the search.                        |
-| Sort         | `G` | Sorts the chest (see [Sorting](#sorting)).                                  | Gathers each item the search shows into the chest holding the most of it, then sorts that chest.           |
+| Sort         | `G` | Sorts the chest.                                                            | Gathers each item the search shows into the chest holding the most of it, then sorts that chest.            |
 
 All the keys can be changed in the config file.
 
