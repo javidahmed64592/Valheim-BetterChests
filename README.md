@@ -6,7 +6,7 @@
 
 Chests standing together form a group you can use as one: search it, deposit into it and restock from it with a redesigned chest panel and keys, plus auto deposit and smarter sorting.
 
-![Chest Interface](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/game_screenshot_1.png)
+![Chest Interface](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/chest_interface.png)
 
 ## Chest Groups
 
@@ -28,6 +28,8 @@ Everything in the mod is built on groups:
 The open chest's name is at the top left, with the search bar beside it, and the five buttons are in one row underneath.
 The panel grows taller to show every row of big chests without scrolling, as far as the bottom of the screen, and the wardrobe is shown as 10 columns by 5 rows instead of 5 by 10.
 
+![Wardrobe](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/wardrobe.png)
+
 ### Buttons and Keys
 
 Every button has a key, shown in the key hints at the bottom of the screen and in a chest's hover text.
@@ -44,7 +46,7 @@ While you search, the buttons work on the whole group instead of the open chest.
 
 All the keys can be changed in the config file.
 
-![Chest Key Hints](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/game_screenshot_3.png)
+![Chest Key Hints](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/chest_key_hints.png)
 
 ### Search
 
@@ -55,7 +57,7 @@ While you type, the chest's grid shows every matching item from the whole group,
 - Right-click it to eat or drink it from that chest, or to take it and equip it.
 - Drag an item from your inventory onto the results, or Ctrl + click it in your inventory, to put it in the chests that already hold that item (the same way as **Deposit all**).
 
-Clear the search to see the open chest again. Closing the chest empties the search.
+![Search](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/search.png)
 
 ### Keeping Items
 
@@ -65,15 +67,20 @@ To keep other items too, such as your food, hold `Alt` and right-click them in y
 ### Duplicates
 
 Items in the open chest that another chest in its group also holds get a blue frame, so you can see what could be gathered into one chest (searching for it and pressing **Sort** does that).
+
+![Duplicate Frames](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/duplicates_1.png)
+
 Hovering over an item in the chest makes the other chests in the group that hold it glow, and its tooltip says how many of them there are and how much they hold.
 Hovering over an item in your inventory does the same for every chest group within auto deposit range of you, so you know where to take it.
+
+![Duplicate Highlight](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/duplicates_2.png)
 
 ### Split Stack
 
 The split stack dialog (Shift + click a stack) gets **-** and **+** buttons either side of the slider to change the amount by one, and so does the mouse wheel.
 This works in your inventory as well as in chests.
 
-![Split Stack Window](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/game_screenshot_2.png)
+![Split Stack Window](https://github.com/javidahmed64592/Valheim-BetterChests/raw/main/images/split_stack.png)
 
 ## Auto Deposit
 
