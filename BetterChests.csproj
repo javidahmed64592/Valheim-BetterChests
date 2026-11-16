@@ -4,7 +4,7 @@
     <TargetFramework>net472</TargetFramework>
     <AssemblyName>BetterChests</AssemblyName>
     <Description>Chests standing together form a group you can use as one: search it, deposit into it and restock from it with a redesigned chest panel and keys, plus auto deposit and smarter sorting.</Description>
-    <Version>0.5.0</Version>
+    <Version>0.6.0</Version>
     <LangVersion>latest</LangVersion>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>

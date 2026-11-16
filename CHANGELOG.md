@@ -1,25 +1,25 @@
 # Changelog
 
-## Unreleased
+## 0.6.0
 
-- Rewrote the README around chest groups: what a group is, the chest panel's buttons and keys side by side with what each does to the open chest and to the whole group while searching, then search, keeping items, duplicates, auto deposit and sorting. The mod's description says the same.
-- **Search a chest group.** Type in the new search bar at the top right of the chest panel: the grid shows every item whose name matches from the open chest and every chest grouped with it, as if they were one chest, in sort order. Click an item to take that stack into your inventory from the chest it is really in (a chest another player has open says it's in use). Right-click an item to eat or drink it straight from its chest, or to take and equip it. While searching, the buttons work on the whole group: **Take all** takes every stack the search shows; **Place stacks** tops up stacks anywhere in the group with the carried items that match; **Deposit all**, Ctrl + clicking an item in your inventory, and dragging an item onto the results put each item into the chests that already hold it (topping up their stacks, then their free slots) and only the rest into the open chest (so carrots go to the chest with your carrots, not the one you happen to have open). **Sort** gathers each item the search shows into the chest that already holds the most of it (as far as it fits), then sorts that chest. While you type, your keys don't close the inventory or use hotbar items. Closing the chest, or opening another, empties the search.
-- The chest panel has a new layout: the chest's name at the top left, and all five buttons in one row under it, grouped by what they do: **Take all** and **Restock** (into your inventory), **Deposit all** and **Place stacks** (into the chest), then **Sort**. Restock now has a button too. Button labels shrink to fit on narrow chests.
-- Press **Y** at a chest (open, or just looking at it) to **restock**: every partial stack you carry, the hotbar included, is topped up from that chest and every chest grouped with it. Chests another player has open are skipped, and a message says how many items came in. The key can be changed with the new `Restock` keybind, and the chest's hover text and key hints show it.
-- **Sorting is smarter**, especially for food and Deep North items:
-  - Crops picked from plants, wild or grown (berries, mushrooms, carrots, turnips, barley…), are ordered by tier, from the earliest biome to the latest, whether you can eat them or not.
-  - Cooked food is ordered by the stat it raises most, in four sections (health, balanced health and stamina, stamina, eitr), lowest first.
-  - Armour is grouped by set, then helmet, chest and legs, also for sets the game doesn't name (such as the mage sets). Weapons are grouped by class, one-handed before two-handed.
-  - Moulds and casts get their own group, ordered like the gear they make: armour sets first, then weapons (staffs included), then shields.
-  - Upgrade kits get their own group: armour kits by tier, then weapon kits by tier.
-  - Meads (anything a fermenter makes) are grouped by what they do: health, stamina, eitr, each resistance (fire, frost, poison…), then the rest. Within each group they go by tier, so minor comes before medium, major and lingering. Mead bases come first, in the same order. Other consumables (boss hearts, toadstools, rotten meat…) have their own group after the meads.
-  - Metal bars and metal parts (nails, chains, springs) are separate groups, so all bars sit together and all nails sit together.
-  - Hides get their own group, by tier. Jute and linen thread moved out of the metals.
-  - Items the mod doesn't list (Deep North items and other mods' items) are placed by tier, worked out from the game's own data: the earliest biome a creature, tree, rock or plant gives it in, carried through recipes, smelting and cooking. A crafted item is never earlier than the station that makes it (so anything made at a Black Forge is Mistlands or later). Before, they all went to the end of their group by name.
-  - New console command `betterchests_sortinfo` writes every item's place in the sort order to the BepInEx log.
-- Fixed **Place stacks** (the button, its key and holding use on a chest) moving items from your hotbar into the chest, such as a mead in the hotbar when the chest holds meads, even though marking a hotbar item says hotbar items are never deposited. Place stacks now keeps the same items as Deposit all: your hotbar, anything equipped, and marked items.
-- The chest keys (**R** take all, **T** place stacks, **F** deposit all, **G** sort) also work while looking at a chest, without opening it, and the chest's hover text shows them. They work on the same chests as opening them: not other players' private chests, chests in someone else's ward, or a chest another player has open. While they act on a chest, the key doesn't also do what the game binds it to (**F** is the Forsaken power, **R** hides your weapons) or what other mods bound to it through the game's controls. They can be turned off in the new `Chest Keys` config section, which also hides the hover text hints.
-- Moved the Harmony patches out of the feature classes into a `Patches` folder, one file per patched game method, like the other mods. No behaviour change.
+- **Chest panel redesign.** The chest's name and a new search bar sit at the top, with all five buttons in one row underneath: **Take all**, **Restock**, **Deposit all**, **Place stacks** and **Sort**.
+- **Search the chest group.** Typing in the search bar shows matching items from every chest in the group as one grid. Click to take a stack, Shift + click to split it, and right-click to eat, drink or equip it, straight from the chest it's in. A red cross clears the search.
+- **Buttons act on the whole group while searching.** Take all takes every result. Place stacks and Deposit all put items into the chests that already hold them before the open chest, as do Ctrl + click and dragging onto the results. Sort gathers each result into the chest holding the most of it.
+- **Restock** (**Y** or the button) tops up every partial stack you carry from the chest's group.
+- **Keys work while looking at a chest**, without opening it, with a message and a sound saying what moved. While they act, they don't also trigger the game's or other mods' bindings for the same key (such as the Forsaken power on **F**). They can be turned off in the new `Chest Keys` config section.
+- **Smarter sorting**, worked out from the game's own data so Deep North and other mods' items sort sensibly:
+  - crops by tier;
+  - cooked food by the stat it raises most;
+  - armour by set, then slot;
+  - weapons by class;
+  - meads by effect;
+  - moulds next to the gear they make;
+  - upgrade kits by kind and tier;
+  - separate groups for bars, metal parts and hides.
+
+  The new `betterchests_sortinfo` console command logs where every item sorts.
+- **Fixed** Place stacks moving items out of your hotbar. It now keeps the same items as Deposit all.
+- The README has been rewritten around chest groups, and the Harmony patches now live in a `Patches` folder.
 
 ## 0.5.0
 
