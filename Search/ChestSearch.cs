@@ -107,10 +107,13 @@ internal static class ChestSearch
         _field.onValueChanged.AddListener(_ => _nextRefresh = 0f);
     }
 
-    /// <summary>A red cross at the right end of the search bar that empties it. Shown only while something is typed.</summary>
+    /// <summary>
+    /// A red cross at the right end of the search bar that empties it. Shown only while something is typed. Drawn as an
+    /// image: the font has no "×", and legacy text draws nothing for a missing character.
+    /// </summary>
     private static GameObject CreateClearButton(Transform field)
     {
-        GameObject clear = new("BetterChests_ClearSearch", typeof(RectTransform), typeof(Text), typeof(Button));
+        GameObject clear = new("BetterChests_ClearSearch", typeof(RectTransform), typeof(Image), typeof(Button));
         clear.transform.SetParent(field, false);
         RectTransform rect = (RectTransform)clear.transform;
         rect.anchorMin = new Vector2(1f, 0.5f);
@@ -119,13 +122,10 @@ internal static class ChestSearch
         rect.sizeDelta = new Vector2(ClearButtonSize, ClearButtonSize);
         rect.anchoredPosition = new Vector2(-4f, 0f);
 
-        Text cross = clear.GetComponent<Text>();
-        cross.font = GUIManager.Instance.AveriaSerifBold;
-        cross.fontSize = 20;
-        cross.fontStyle = FontStyle.Bold;
-        cross.alignment = TextAnchor.MiddleCenter;
+        Image cross = clear.GetComponent<Image>();
+        cross.sprite = CrossSprite();
         cross.color = ClearColour;
-        cross.text = "\u00D7"; // ×
+        cross.preserveAspect = true;
 
         Button button = clear.GetComponent<Button>();
         button.targetGraphic = cross;
@@ -135,6 +135,49 @@ internal static class ChestSearch
             _field.DeactivateInputField();
         });
         return clear;
+    }
+
+    private static Sprite _crossSprite;
+
+    /// <summary>A white cross (two thick diagonal strokes, antialiased) on a transparent square, tinted by the image.</summary>
+    private static Sprite CrossSprite()
+    {
+        if (_crossSprite != null)
+        {
+            return _crossSprite;
+        }
+
+        const int size = 32;
+        const float halfWidth = 2.6f; // half the stroke width, in pixels
+        const float inset = 6f; // how far the strokes stop from the edges
+        Texture2D texture = new(size, size, TextureFormat.RGBA32, false)
+        {
+            filterMode = FilterMode.Bilinear,
+            wrapMode = TextureWrapMode.Clamp,
+            hideFlags = HideFlags.HideAndDontSave,
+        };
+        Color32[] pixels = new Color32[size * size];
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float px = x + 0.5f;
+                float py = y + 0.5f;
+                bool inside = px >= inset && px <= size - inset && py >= inset && py <= size - inset;
+                // Distance to each diagonal, through the middle of the square.
+                float toFirst = Mathf.Abs(px - py) / Mathf.Sqrt(2f);
+                float toSecond = Mathf.Abs(px + py - size) / Mathf.Sqrt(2f);
+                float distance = Mathf.Min(toFirst, toSecond);
+                float alpha = inside ? Mathf.Clamp01(halfWidth + 0.5f - distance) : 0f;
+                pixels[(y * size) + x] = new Color32(255, 255, 255, (byte)(alpha * 255f));
+            }
+        }
+        texture.SetPixels32(pixels);
+        texture.Apply();
+
+        _crossSprite = Sprite.Create(texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f));
+        _crossSprite.hideFlags = HideFlags.HideAndDontSave;
+        return _crossSprite;
     }
 
     /// <summary>Empties the search when a chest is closed or another one is opened.</summary>
