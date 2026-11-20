@@ -38,11 +38,11 @@ While you search, the buttons work on the whole group instead of the open chest.
 
 | Button       | Key | On the open chest                                                           | While searching the group                                                                                   |
 | ------------ | --- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Take all     | `R` | Moves everything in the chest into your inventory.                          | Takes every stack the search shows.                                                                         |
-| Restock      | `Y` | Tops up every partial stack you carry from the whole group.                 | The same.                                                                                                   |
+| Restock      | `R` | Tops up every partial stack you carry from the whole group.                 | The same.                                                                                                   |
+| Take all     | `T` | Moves everything in the chest into your inventory.                          | Takes every stack the search shows.                                                                         |
 | Deposit all  | `F` | Moves everything you carry into the chest, except kept items (see below).   | Puts each item in the chests that already hold it, topping up their stacks first, and the rest in this one. |
-| Place stacks | `T` | Tops up stacks already in the chest with what you carry, except kept items. | Tops up stacks anywhere in the group with the items you carry that match the search.                        |
-| Sort         | `G` | Sorts the chest.                                                            | Gathers each item the search shows into the chest holding the most of it, then sorts that chest.            |
+| Place stacks | `G` | Tops up stacks already in the chest with what you carry, except kept items. | Tops up stacks anywhere in the group with the items you carry that match the search.                        |
+| Sort         | `H` | Sorts the chest.                                                            | Gathers each item the search shows into the chest holding the most of it, then sorts that chest.            |
 
 All the keys can be changed in the config file.
 
@@ -110,7 +110,7 @@ Settings marked "(Synced with server)" use the server's values when the server h
 
 ## Compatibility
 
-- Other chest mods that add sorting, quick stacking or auto storing (such as Quick Stack - Store - Sort - Trash - Restock) overlap with this mod. Their keys may clash with `R`, `T`, `F`, `G` and `Y` (all can be changed in the config file), and their buttons may overlap on the chest panel.
+- Other chest mods that add sorting, quick stacking or auto storing (such as Quick Stack - Store - Sort - Trash - Restock) overlap with this mod. Their keys may clash with `R`, `T`, `F`, `G` and `H` (all can be changed in the config file), and their buttons may overlap on the chest panel.
 - This mod has not been tested with a gamepad, only with keyboard and mouse.
 
 ## Uninstalling

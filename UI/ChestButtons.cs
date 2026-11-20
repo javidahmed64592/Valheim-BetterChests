@@ -14,7 +14,7 @@ using UnityEngine.UI;
 namespace BetterChests.UI;
 
 /// <summary>
-/// The chest panel's extra buttons ("Deposit all", "Sort" and "Restock", next to vanilla's "Take all" and "Place
+/// The chest panel's extra buttons ("Restock", "Deposit all" and "Sort", next to vanilla's "Take all" and "Place
 /// stacks"; <see cref="ChestPanelLayout"/> puts all five in a row) and the chest keys.
 /// </summary>
 internal static class ChestButtons
@@ -60,20 +60,20 @@ internal static class ChestButtons
     }
 
     /// <summary>
-    /// Adds the Deposit all, Sort and Restock buttons when the inventory screen is created, and lays out the row:
-    /// what comes into your inventory (Take all, Restock), what goes into the chest (Deposit all, Place stacks), then
+    /// Adds the Restock, Deposit all and Sort buttons when the inventory screen is created, and lays out the row:
+    /// what comes into your inventory (Restock, Take all), what goes into the chest (Deposit all, Place stacks), then
     /// Sort.
     /// </summary>
     internal static void CreateButtons(InventoryGui gui)
     {
+        Button restock = CreateButton(gui.m_takeAllButton, "BetterChests_Restock", "$betterchests_hint_restock",
+            () => ChestRestock.Restock(gui.m_currentContainer, Player.m_localPlayer));
         Button depositAll = CreateButton(gui.m_takeAllButton, "BetterChests_DepositAll", "$betterchests_deposit_all",
             DepositAll.DepositIntoOpenContainer);
         Button sort = CreateButton(gui.m_stackAllButton, "BetterChests_Sort", "$betterchests_sort",
             ChestSort.SortOpenContainer);
-        Button restock = CreateButton(gui.m_takeAllButton, "BetterChests_Restock", "$betterchests_hint_restock",
-            () => ChestRestock.Restock(gui.m_currentContainer, Player.m_localPlayer));
         ChestPanelLayout.Setup(gui,
-            [.. new[] { gui.m_takeAllButton, restock, depositAll, gui.m_stackAllButton, sort }.Where(b => b != null)]);
+            [.. new[] { restock, gui.m_takeAllButton, depositAll, gui.m_stackAllButton, sort }.Where(b => b != null)]);
         ChestSearch.Create();
     }
 
@@ -90,7 +90,11 @@ internal static class ChestButtons
             return;
         }
 
-        if (BetterChestsPlugin._takeAllKey.Down())
+        if (BetterChestsPlugin._restockKey.Down())
+        {
+            ChestRestock.Restock(gui.m_currentContainer, Player.m_localPlayer);
+        }
+        else if (BetterChestsPlugin._takeAllKey.Down())
         {
             gui.OnTakeAll();
         }
@@ -105,10 +109,6 @@ internal static class ChestButtons
         else if (BetterChestsPlugin._sortKey.Down())
         {
             ChestSort.SortOpenContainer();
-        }
-        else if (BetterChestsPlugin._restockKey.Down())
-        {
-            ChestRestock.Restock(gui.m_currentContainer, Player.m_localPlayer);
         }
     }
 }
