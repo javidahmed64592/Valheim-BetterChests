@@ -7,20 +7,42 @@ namespace BetterChests.Core;
 
 /// <summary>
 /// Only a chest's owner may change it, so, like opening a chest yourself, its owner is asked to hand it over; they
-/// refuse if someone has it open. Auto deposit and the chest keys share these requests, so a chest is only asked
-/// once however many of them are waiting, and the answer never opens the chest's panel unless the player asked to
-/// open it too.
+/// refuse if someone has it open. Auto deposit, restock, search and the chest keys share these requests, so a chest is
+/// only asked once however many of them are waiting, and the answer never opens the chest's panel unless the player
+/// asked to open it too.
 /// </summary>
+/// <remarks>
+/// The owner's "yes" and the ownership itself travel separately: the answer is an RPC, sent straight away, while the
+/// chest (its new owner and its contents) follows with the next object sync. The answer usually arrives first, so a
+/// granted request waits until this game owns the chest, as vanilla's chest panel does, and then reads the contents
+/// that came with it. Treating that gap as a refusal showed "someone else is using this" for nearly every chest
+/// another player owned.
+/// </remarks>
 internal static class ChestRequests
 {
     /// <summary>
-    /// Seconds to wait for a chest's owner to answer before giving up (for example, they left).
+    /// Seconds to wait for a chest's owner to answer, or for the chest to arrive after they agreed, before giving up
+    /// (for example, they left).
     /// </summary>
     private const float Timeout = 5f;
 
+    /// <summary>A chest that keeps changing hands is asked for this many times at most.</summary>
+    private const int MaxAsks = 3;
+
     private sealed class Pending
     {
-        public float AskedAt;
+        /// <summary>When the owner was last asked, or agreed.</summary>
+        public float Since;
+
+        /// <summary>Who was asked. If the chest changes hands before they answer, they won't, so the new owner is asked.</summary>
+        public long AskedOwner;
+
+        /// <summary>The owner agreed; waiting for the chest to arrive.</summary>
+        public bool Granted;
+
+        /// <summary>How many times the chest has been asked for.</summary>
+        public int Asks;
+
         public readonly List<Action<bool>> Callbacks = [];
     }
 
@@ -35,18 +57,25 @@ internal static class ChestRequests
     /// </summary>
     internal static void Request(Container container, Action<bool> onAnswer)
     {
-        ForgetStale();
+        Update();
         if (Waiting.TryGetValue(container, out Pending pending))
         {
-            pending.AskedAt = Time.time;
             pending.Callbacks.Add(onAnswer); // the chest's owner has already been asked
             return;
         }
 
         // Listed before asking: when this player owns the chest, the answer arrives during the call.
-        pending = new Pending { AskedAt = Time.time };
+        pending = new Pending();
         pending.Callbacks.Add(onAnswer);
         Waiting[container] = pending;
+        Ask(container, pending);
+    }
+
+    private static void Ask(Container container, Pending pending)
+    {
+        pending.Since = Time.time;
+        pending.Asks++;
+        pending.AskedOwner = container.m_nview.GetZDO().GetOwner();
         container.m_nview.InvokeRPC("RPC_RequestOpen", Game.instance.GetPlayerProfile().GetPlayerID());
     }
 
@@ -61,15 +90,24 @@ internal static class ChestRequests
             return false;
         }
 
-        _ = Waiting.Remove(container);
-        bool ours = granted && container.m_nview.IsValid() && container.IsOwner();
-        foreach (Action<bool> callback in pending.Callbacks)
-        {
-            callback(ours);
-        }
+        // If the player also asked to open the chest, let the answer open it as usual (vanilla then waits for the
+        // chest to arrive itself).
+        bool swallow = !OpenedByPlayer.Remove(container);
 
-        // If the player also asked to open the chest, let the answer open it as usual.
-        return !OpenedByPlayer.Remove(container);
+        if (!granted || !container.m_nview.IsValid())
+        {
+            Finish(container, pending, false);
+        }
+        else if (container.IsOwner())
+        {
+            Finish(container, pending, true);
+        }
+        else
+        {
+            pending.Granted = true;
+            pending.Since = Time.time;
+        }
+        return swallow;
     }
 
     /// <summary>
@@ -78,38 +116,90 @@ internal static class ChestRequests
     /// </summary>
     internal static void BeforeInteract(Container container, bool hold)
     {
-        if (!hold && Waiting.ContainsKey(container))
+        if (!hold && Waiting.TryGetValue(container, out Pending pending) && !pending.Granted)
         {
             _ = OpenedByPlayer.Add(container);
         }
     }
 
-    /// <summary>Gives up on chests whose owner never answered, telling the waiting callers.</summary>
-    private static void ForgetStale()
+    /// <summary>
+    /// Called every frame: hands over chests that have arrived after their owner agreed, asks again when a chest
+    /// changed hands before its owner answered, and gives up on chests whose owner never answered.
+    /// </summary>
+    internal static void Update()
     {
-        List<Container> stale = null;
-        foreach (KeyValuePair<Container, Pending> entry in Waiting)
-        {
-            if (entry.Key == null || Time.time - entry.Value.AskedAt > Timeout)
-            {
-                (stale ??= []).Add(entry.Key);
-            }
-        }
-
-        if (stale == null)
+        if (Waiting.Count == 0)
         {
             return;
         }
 
-        foreach (Container container in stale)
+        List<KeyValuePair<Container, Pending>> done = null;
+        foreach (KeyValuePair<Container, Pending> entry in Waiting)
         {
-            Pending pending = Waiting[container];
-            _ = Waiting.Remove(container);
-            _ = OpenedByPlayer.Remove(container);
-            foreach (Action<bool> callback in pending.Callbacks)
+            Container container = entry.Key;
+            Pending pending = entry.Value;
+            if (container == null || !container.m_nview.IsValid())
             {
-                callback(false);
+                (done ??= []).Add(entry);
+                continue;
             }
+
+            if (pending.Granted)
+            {
+                if (container.IsOwner() || Time.time - pending.Since > Timeout)
+                {
+                    (done ??= []).Add(entry);
+                }
+                continue;
+            }
+
+            if (Time.time - pending.Since > Timeout)
+            {
+                (done ??= []).Add(entry);
+                continue;
+            }
+
+            // The player we asked no longer owns the chest, so they ignore the request ("but im not the owner"): ask
+            // whoever owns it now. When it changed hands to this game, the owner's answer is on its way.
+            long owner = container.m_nview.GetZDO().GetOwner();
+            if (owner != pending.AskedOwner && owner != 0L && owner != ZDOMan.GetSessionID() && pending.Asks < MaxAsks)
+            {
+                Ask(container, pending);
+            }
+        }
+
+        if (done == null)
+        {
+            return;
+        }
+
+        foreach (KeyValuePair<Container, Pending> entry in done)
+        {
+            Container container = entry.Key;
+            bool ours = container != null && container.m_nview.IsValid() && container.IsOwner();
+            Finish(container, entry.Value, ours);
+        }
+    }
+
+    private static void Finish(Container container, Pending pending, bool ours)
+    {
+        if (container is null || !Waiting.TryGetValue(container, out Pending current) || current != pending)
+        {
+            return;
+        }
+
+        _ = Waiting.Remove(container);
+        _ = OpenedByPlayer.Remove(container);
+        if (ours)
+        {
+            // The contents arrived with the chest, but the chest only reads them once a second. Read them now, so
+            // changing it doesn't save over what the previous owner put in.
+            _ = container.Load();
+        }
+
+        foreach (Action<bool> callback in pending.Callbacks)
+        {
+            callback(ours);
         }
     }
 }

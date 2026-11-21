@@ -11,9 +11,9 @@ using UnityEngine;
 namespace BetterChests.Keys;
 
 /// <summary>
-/// The chest keys (take all, place stacks, deposit all and sort) also work while looking at a chest, without opening
-/// it. The same chests can be used as by opening them: not other players' private chests, chests in someone else's
-/// ward, or a chest another player has open. The chest's owner hands it over first, as when opening it, so the
+/// The chest keys (restock, take all, deposit all, place stacks and sort) also work while looking at a chest, without
+/// opening it. The same chests can be used as by opening them: not other players' private chests, chests in someone
+/// else's ward, or a chest another player has open. The chest's owner hands it over first, as when opening it, so the
 /// change is saved however far its owner is.
 /// </summary>
 internal static class ChestKeys
@@ -34,7 +34,7 @@ internal static class ChestKeys
     internal static void BindConfig(ConfigFile config)
     {
         _enabled = config.Bind("Chest Keys", "Enabled", true,
-            "The chest keys (take all, place stacks, deposit all, sort) also work while looking at a chest, without opening it.");
+            "The chest keys (restock, take all, deposit all, place stacks, sort) also work while looking at a chest, without opening it.");
         _hoverHints = config.Bind("Chest Keys", "Hover Hints", true,
             "Show the chest keys in a chest's hover text.");
     }
@@ -93,25 +93,25 @@ internal static class ChestKeys
 
     private static Action PressedAction()
     {
-        if (BetterChestsPlugin._takeAllKey.Down())
+        if (BetterChestsPlugin._restockKey.Down())
+        {
+            return Action.Restock;
+        }
+        else if (BetterChestsPlugin._takeAllKey.Down())
         {
             return Action.TakeAll;
-        }
-        else if (BetterChestsPlugin._placeStacksKey.Down())
-        {
-            return Action.PlaceStacks;
         }
         else if (BetterChestsPlugin._depositAllKey.Down())
         {
             return Action.DepositAll;
         }
+        else if (BetterChestsPlugin._placeStacksKey.Down())
+        {
+            return Action.PlaceStacks;
+        }
         else if (BetterChestsPlugin._sortKey.Down())
         {
             return Action.Sort;
-        }
-        else if (BetterChestsPlugin._restockKey.Down())
-        {
-            return Action.Restock;
         }
         return Action.None;
     }
@@ -179,19 +179,19 @@ internal static class ChestKeys
     }
 
     /// <summary>
-    /// The keys in a chest's hover text, laid out like the chest panel's buttons: take all and place stacks, then
-    /// deposit all and sort. Only for chests the keys may use.
+    /// The keys in a chest's hover text, in the chest panel's order: restock and take all, deposit all and place
+    /// stacks, then sort. Only for chests the keys may use.
     /// </summary>
     internal static string HoverHints(Container chest)
     {
         return _enabled == null || !_enabled.Value || !_hoverHints.Value
             || !ChestClusters.IsChest(chest) || !ChestClusters.CanAccess(chest)
             ? ""
-            : "\n" + Hint(BetterChestsPlugin._takeAllKey, "$betterchests_hint_take_all")
-            + "  " + Hint(BetterChestsPlugin._placeStacksKey, "$betterchests_hint_place_stacks")
+            : "\n" + Hint(BetterChestsPlugin._restockKey, "$betterchests_hint_restock")
+            + "  " + Hint(BetterChestsPlugin._takeAllKey, "$betterchests_hint_take_all")
             + "\n" + Hint(BetterChestsPlugin._depositAllKey, "$betterchests_deposit_all")
-            + "  " + Hint(BetterChestsPlugin._sortKey, "$betterchests_sort")
-            + "\n" + Hint(BetterChestsPlugin._restockKey, "$betterchests_hint_restock");
+            + "  " + Hint(BetterChestsPlugin._placeStacksKey, "$betterchests_hint_place_stacks")
+            + "\n" + Hint(BetterChestsPlugin._sortKey, "$betterchests_sort");
     }
 
     private static string Hint(Keybind key, string label)

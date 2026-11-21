@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.0
+
+- **Fixed** "Someone else is using this" appearing for chests nobody had open, stopping the chest keys, Restock, auto deposit and search from using them. It happened whenever another player owned the chest: their "yes" arrived a moment before the chest itself, and was taken as a "no". Requests now wait for the chest to arrive, as opening a chest does, and ask again if the chest changed hands before its owner answered.
+- **New button order and default keys:** **Restock** (`R`), **Take all** (`T`), **Deposit all** (`F`), **Place stacks** (`G`) and **Sort** (`H`). The key hints and a chest's hover text follow the same order. Keys already saved in your config file are kept, so delete the `Keybinds` entries to get the new defaults.
+
 ## 0.6.0
 
 - **Chest panel redesign.** The chest's name and a new search bar sit at the top, with all five buttons in one row underneath: **Take all**, **Restock**, **Deposit all**, **Place stacks** and **Sort**.
