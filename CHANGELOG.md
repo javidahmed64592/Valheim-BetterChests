@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.1
+
+- The mod's name is now shown as "Better Chests", with a space like the other mods. Its settings are unchanged.
+
 ## 0.7.0
 
 - **Fixed** "Someone else is using this" appearing for chests nobody had open, stopping the chest keys, Restock, auto deposit and search from using them. It happened whenever another player owned the chest: their "yes" arrived a moment before the chest itself, and was taken as a "no". Requests now wait for the chest to arrive, as opening a chest does, and ask again if the chest changed hands before its owner answered.

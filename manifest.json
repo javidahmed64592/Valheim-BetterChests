@@ -1,7 +1,7 @@
 {
   "name": "BetterChests",
   "description": "Chests standing together form a group you can use as one: search it, deposit into it and restock from it with a redesigned chest panel and keys, plus auto deposit and smarter sorting.",
-  "version_number": "0.7.0",
+  "version_number": "0.7.1",
   "dependencies": [
     "denikson-BepInExPack_Valheim-5.4.2360",
     "ValheimModding-Jotunn-2.30.2"
