@@ -200,7 +200,7 @@ internal static class SearchActions
     /// was. So on true nothing is left over, whatever m_stack says, and the item comes out of <paramref name="from"/>.
     /// False means what didn't fit is left in m_stack. (Reading m_stack after a true is what duplicated split stacks.)
     /// </summary>
-    private static bool MoveInto(ItemDrop.ItemData item, Inventory from, Inventory to, out int left)
+    internal static bool MoveInto(ItemDrop.ItemData item, Inventory from, Inventory to, out int left)
     {
         int before = item.m_stack;
         bool moved;
@@ -310,7 +310,7 @@ internal static class SearchActions
     }
 
     /// <summary>Asks for every chest, then acts on the ones this game now owns (the open one first).</summary>
-    private static void WithChests(List<Container> chests, Action<List<Container>> act)
+    internal static void WithChests(List<Container> chests, Action<List<Container>> act)
     {
         List<Container> owned = [];
         int waiting = chests.Count;

@@ -15,7 +15,7 @@ namespace BetterChests.Sorting;
 internal static class ChestSort
 {
     /// <summary>
-    /// Sorts the chest open in the inventory screen, if any.
+    /// Sorts the chest open in the inventory screen, if any, or its whole group with the Sort Group Modifier held.
     /// </summary>
     internal static void SortOpenContainer()
     {
@@ -28,6 +28,12 @@ internal static class ChestSort
 
         // Drop whatever is being dragged back where it came from, like the vanilla chest buttons do.
         gui.SetupDragItem(null, null, 1);
+        if (BetterChestsPlugin._sortGroupKey.Held())
+        {
+            GroupSort.SortGroup(container);
+            return;
+        }
+
         if (ChestSearch.Active)
         {
             SearchActions.Gather();

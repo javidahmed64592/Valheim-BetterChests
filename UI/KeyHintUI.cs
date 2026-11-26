@@ -38,6 +38,10 @@ internal static class KeyHintUI
         /// Shown as the key plus a right-click, like the vanilla "Ctrl + click" drop hint.
         /// </summary>
         public bool WithRightClick;
+        /// <summary>
+        /// Shown as this modifier plus <see cref="Key"/>, like the vanilla "Ctrl + click" drop hint.
+        /// </summary>
+        public System.Func<Keybind> Modifier;
     }
 
     private static readonly HintDef[] Hints =
@@ -47,6 +51,13 @@ internal static class KeyHintUI
         new HintDef { Label = "$betterchests_deposit_all", Key = () => BetterChestsPlugin._depositAllKey, Visibility = HintVisibility.ContainerOnly },
         new HintDef { Label = "$betterchests_hint_place_stacks", Key = () => BetterChestsPlugin._placeStacksKey, Visibility = HintVisibility.ContainerOnly },
         new HintDef { Label = "$betterchests_sort", Key = () => BetterChestsPlugin._sortKey, Visibility = HintVisibility.ContainerOnly },
+        new HintDef
+        {
+            Label = "$betterchests_sort_group",
+            Key = () => BetterChestsPlugin._sortKey,
+            Modifier = () => BetterChestsPlugin._sortGroupKey,
+            Visibility = HintVisibility.ContainerOnly
+        },
         new HintDef { Label = "$betterchests_hint_split", Scroll = true, Visibility = HintVisibility.SplitDialogOnly },
         new HintDef
         {
@@ -68,6 +79,10 @@ internal static class KeyHintUI
         /// Null for hints without a key.
         /// </summary>
         public TMP_Text[] KeyTexts;
+        /// <summary>
+        /// The second key box of a modifier hint (the main key), or null when both keys share one box.
+        /// </summary>
+        public TMP_Text[] SecondKeyTexts;
         /// <summary>
         /// Written after the key in its box: " + Mouse 1" when there is no box of its own for the click.
         /// </summary>
@@ -138,12 +153,20 @@ internal static class KeyHintUI
             if (hint.Key != null && text != null)
             {
                 KeyCode key = hint.Key().Key;
-                string keyName = (hint.WithRightClick ? ModifierName(key) : KeyName(key)) + row.KeySuffixes[i];
-                if (text.text != keyName)
+                string keyName;
+                if (hint.Modifier != null)
                 {
-                    text.text = keyName;
-                    dirty = true;
+                    string modifierName = ModifierName(hint.Modifier().Key);
+                    TMP_Text second = row.SecondKeyTexts[i];
+                    keyName = second != null ? modifierName : modifierName + " + " + KeyName(key);
+                    dirty |= SetText(second, KeyName(key));
                 }
+                else
+                {
+                    keyName = (hint.WithRightClick ? ModifierName(key) : KeyName(key)) + row.KeySuffixes[i];
+                }
+
+                dirty |= SetText(text, keyName);
             }
         }
 
@@ -151,6 +174,20 @@ internal static class KeyHintUI
         {
             LayoutRebuilder.ForceRebuildLayoutImmediate(row.Keyboard);
         }
+    }
+
+    /// <summary>
+    /// Sets the text if it changed, and says whether it did.
+    /// </summary>
+    private static bool SetText(TMP_Text text, string value)
+    {
+        if (text == null || text.text == value)
+        {
+            return false;
+        }
+
+        text.text = value;
+        return true;
     }
 
     private static Row Create(KeyHints keyHints, GameObject root)
@@ -170,6 +207,7 @@ internal static class KeyHintUI
         row.Items = new GameObject[Hints.Length];
         row.KeyTexts = new TMP_Text[Hints.Length];
         row.KeySuffixes = new string[Hints.Length];
+        row.SecondKeyTexts = new TMP_Text[Hints.Length];
 
         Transform scrollTemplate = FindScrollTemplate(keyHints);
         Transform clickTemplate = FindClickTemplate(keyboard);
@@ -182,10 +220,14 @@ internal static class KeyHintUI
             {
                 row.Items[i] = CreateScrollHint(hint, template, scrollTemplate, keyboard);
             }
-            else if (hint.WithRightClick && clickTemplate != null)
+            else if ((hint.WithRightClick || hint.Modifier != null) && clickTemplate != null)
             {
                 row.Items[i] = CreateClickHint(hint, clickTemplate, keyboard);
                 row.KeyTexts[i] = row.Items[i].transform.Find("key_bkg").GetComponentInChildren<TMP_Text>(true);
+                if (hint.Modifier != null)
+                {
+                    row.SecondKeyTexts[i] = row.Items[i].transform.Find("key_bkg (2)").GetComponentInChildren<TMP_Text>(true);
+                }
             }
             else
             {
@@ -253,7 +295,8 @@ internal static class KeyHintUI
     }
 
     /// <summary>
-    /// A copy of the vanilla "Drop" hint (a label, a key, "+" and a mouse button), showing a right-click.
+    /// A copy of the vanilla "Drop" hint (a label, a key, "+" and a mouse button), showing a right-click. Modifier
+    /// hints use the same shape, and their second box is set to the main key as the hints update.
     /// </summary>
     private static GameObject CreateClickHint(HintDef hint, Transform clickTemplate, Transform keyboard)
     {
@@ -317,7 +360,7 @@ internal static class KeyHintUI
     /// <summary>
     /// Either side of a modifier works, so "LeftAlt" is shown as just "Alt".
     /// </summary>
-    private static string ModifierName(KeyCode key)
+    internal static string ModifierName(KeyCode key)
     {
         string name = KeyName(key);
         foreach (string side in new[] { "Left ", "Right " })

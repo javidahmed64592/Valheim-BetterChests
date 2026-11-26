@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.0
+
+- **Sort group:** hold `Shift` with Sort (the button, or `H` on an open chest or one you're looking at) to sort a chest's whole group. Each item is gathered into a chest of its own as far as the chests allow, overflow stays where it is, and every chest is sorted. The modifier is the new `Sort Group Modifier` key setting.
+
 ## 0.7.1
 
 - The mod's name is now shown as "Better Chests", with a space like the other mods. Its settings are unchanged.
