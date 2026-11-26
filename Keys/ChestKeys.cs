@@ -64,6 +64,12 @@ internal static class ChestKeys
             return true;
         }
 
+        if (action == Action.Sort && BetterChestsPlugin._sortGroupKey.Held())
+        {
+            GroupSort.SortGroup(chest); // asks for each chest in the group itself
+            return true;
+        }
+
         ChestRequests.Request(chest, granted =>
         {
             if (!granted)
@@ -180,7 +186,7 @@ internal static class ChestKeys
 
     /// <summary>
     /// The keys in a chest's hover text, in the chest panel's order: restock and take all, deposit all and place
-    /// stacks, then sort. Only for chests the keys may use.
+    /// stacks, then sort and sort group. Only for chests the keys may use.
     /// </summary>
     internal static string HoverHints(Container chest)
     {
@@ -191,11 +197,17 @@ internal static class ChestKeys
             + "  " + Hint(BetterChestsPlugin._takeAllKey, "$betterchests_hint_take_all")
             + "\n" + Hint(BetterChestsPlugin._depositAllKey, "$betterchests_deposit_all")
             + "  " + Hint(BetterChestsPlugin._placeStacksKey, "$betterchests_hint_place_stacks")
-            + "\n" + Hint(BetterChestsPlugin._sortKey, "$betterchests_sort");
+            + "\n" + Hint(BetterChestsPlugin._sortKey, "$betterchests_sort")
+            + "  " + Hint(BetterChestsPlugin._sortGroupKey, BetterChestsPlugin._sortKey, "$betterchests_sort_group");
     }
 
     private static string Hint(Keybind key, string label)
     {
         return "[<color=yellow><b>" + KeyHintUI.KeyName(key.Key) + "</b></color>] " + label;
+    }
+
+    private static string Hint(Keybind modifier, Keybind key, string label)
+    {
+        return "[<color=yellow><b>" + KeyHintUI.ModifierName(modifier.Key) + " + " + KeyHintUI.KeyName(key.Key) + "</b></color>] " + label;
     }
 }
