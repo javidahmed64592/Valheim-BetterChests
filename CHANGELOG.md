@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.1
+
+- **Sort group now places every stack.** Items with a chest's worth or more, such as stone or wood, get whole chests instead of the overflow staying scattered across the group. Partial stacks are merged across the group first; the rest get a chest each where there are enough, or share in sort order, and an item is only split between two chests when there's no other way to fit everything.
+
 ## 0.8.0
 
 - **Sort group:** hold `Shift` with Sort (the button, or `H` on an open chest or one you're looking at) to sort a chest's whole group. Each item is gathered into a chest of its own as far as the chests allow, overflow stays where it is, and every chest is sorted. The modifier is the new `Sort Group Modifier` key setting.

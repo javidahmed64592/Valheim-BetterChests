@@ -109,9 +109,9 @@ Items from other mods are sorted the same way, by what the game says they are an
 Hold `Shift` while pressing Sort (the button or `H`, with the chest open or while looking at it) to sort the chest's whole group at once.
 Each item is gathered into a chest of its own as far as the chests allow, then every chest is sorted:
 
-- Items with the most in the group choose first, each taking the chest that holds the most of it and isn't already another item's chest, or else an empty chest.
-- When every chest is taken, an item shares the chest that holds the most of it.
-- Stacks move into their item's chest as far as they fit. What doesn't fit stays where it is.
+- Partial stacks are merged across the whole group.
+- An item with enough to fill a chest gets whole chests to itself, the ones already holding the most of it.
+- Everything else goes into the other chests in sort order. Each item gets a chest of its own if there are enough; otherwise similar items share, and an item is only split between two chests when there's no other way to fit everything.
 - A chest another player has open is left out, and the message says how many were.
 
 ## Configuration
