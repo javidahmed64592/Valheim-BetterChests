@@ -77,7 +77,7 @@ internal static class ChestSort
     /// <summary>
     /// Tops up partial stacks from later stacks of the same item, removing any that end up empty.
     /// </summary>
-    private static void MergeStacks(List<ItemDrop.ItemData> items)
+    internal static void MergeStacks(List<ItemDrop.ItemData> items)
     {
         for (int i = 0; i < items.Count; i++)
         {
