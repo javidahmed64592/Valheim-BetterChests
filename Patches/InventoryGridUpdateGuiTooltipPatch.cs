@@ -18,7 +18,10 @@ namespace BetterChests.Patches;
 [Feature(Feature)]
 internal static class InventoryGrid_UpdateGui_Tooltip_Patch
 {
-    /// <summary>Without it, item tooltips are vanilla's, without the nearby chests holding the item.</summary>
+    /// <summary>
+    /// Without it, item tooltips are vanilla's, without the nearby chests holding the item, and hovering over an
+    /// item no longer makes those chests glow (the glow uses the item this tooltip remembers).
+    /// </summary>
     public const string Feature = "Nearby chests in tooltips";
 
     private static readonly MethodInfo Original = AccessTools.Method(typeof(InventoryGrid), "CreateItemTooltip");
