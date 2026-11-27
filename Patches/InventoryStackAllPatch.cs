@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -35,7 +36,7 @@ internal static class Inventory_StackAll_Patch
 
         if (!replaced)
         {
-            BetterChestsPlugin._log.LogWarning("Inventory.StackAll not as expected: Place stacks will not skip kept items.");
+            throw new InvalidOperationException("Inventory.StackAll has no GetAllItems call to replace");
         }
     }
 }

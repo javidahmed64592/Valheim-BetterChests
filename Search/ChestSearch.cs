@@ -21,6 +21,12 @@ namespace BetterChests.Search;
 /// </summary>
 internal static class ChestSearch
 {
+    /// <summary>
+    /// The search bar's patches: showing the results, clicking them, and the buttons acting on them. Without it,
+    /// the search bar isn't shown, or is hidden and emptied if it was, and the chest panel works on the open chest.
+    /// </summary>
+    public const string Feature = "Search";
+
     private const float RefreshInterval = 1f;
 
     /// <summary>Space between the search bar's edges and its text.</summary>
@@ -68,7 +74,7 @@ internal static class ChestSearch
     internal static void Create()
     {
         RectTransform row = ChestPanelLayout.TitleRow;
-        if (row == null || GUIManager.Instance == null)
+        if (row == null || GUIManager.Instance == null || !SafePatcher.IsOn(Feature))
         {
             return;
         }
@@ -178,6 +184,20 @@ internal static class ChestSearch
         _crossSprite = Sprite.Create(texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f));
         _crossSprite.hideFlags = HideFlags.HideAndDontSave;
         return _crossSprite;
+    }
+
+    /// <summary>
+    /// Hides and empties the search bar if the search feature has turned off since it was created, so nothing is
+    /// left acting on results the grid no longer shows. Called every frame while the inventory is open.
+    /// </summary>
+    internal static void HideIfOff()
+    {
+        if (_field != null && _field.gameObject.activeSelf && !SafePatcher.IsOn(Feature))
+        {
+            Clear();
+            _field.DeactivateInputField();
+            _field.gameObject.SetActive(false);
+        }
     }
 
     /// <summary>Empties the search when a chest is closed or another one is opened.</summary>

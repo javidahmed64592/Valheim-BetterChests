@@ -1,3 +1,4 @@
+using BetterChests.Core;
 using BetterChests.Search;
 
 using HarmonyLib;
@@ -6,6 +7,7 @@ namespace BetterChests.Patches;
 
 /// <summary>While searching, Take all (the button and its key) takes every stack the search shows.</summary>
 [HarmonyPatch(typeof(InventoryGui), "OnTakeAll")]
+[Feature(ChestSearch.Feature)]
 internal static class InventoryGui_OnTakeAll_Patch
 {
     private static bool Prefix(InventoryGui __instance)

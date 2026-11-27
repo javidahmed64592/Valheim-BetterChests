@@ -16,6 +16,9 @@ namespace BetterChests.Deposit;
 /// </summary>
 internal static class AutoDeposit
 {
+    /// <summary>The two drop patches. Without it, dropped items land on the ground as in vanilla.</summary>
+    public const string Feature = "Auto deposit";
+
     /// <summary>
     /// How long past the delay to wait for a still moving item to come to rest before storing it anyway.
     /// </summary>
