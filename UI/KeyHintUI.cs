@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
+using BetterChests.Core;
+
 using TMPro;
 
 using UnityEngine;
@@ -42,6 +44,10 @@ internal static class KeyHintUI
         /// Shown as this modifier plus <see cref="Key"/>, like the vanilla "Ctrl + click" drop hint.
         /// </summary>
         public System.Func<Keybind> Modifier;
+        /// <summary>
+        /// The feature the hint's control belongs to, if not the core: the hint is hidden while that feature is off.
+        /// </summary>
+        public string Feature;
     }
 
     private static readonly HintDef[] Hints =
@@ -58,7 +64,7 @@ internal static class KeyHintUI
             Modifier = () => BetterChestsPlugin._sortGroupKey,
             Visibility = HintVisibility.ContainerOnly
         },
-        new HintDef { Label = "$betterchests_hint_split", Scroll = true, Visibility = HintVisibility.SplitDialogOnly },
+        new HintDef { Label = "$betterchests_hint_split", Scroll = true, Visibility = HintVisibility.SplitDialogOnly, Feature = SplitDialogControls.Feature },
         new HintDef
         {
             Label = "$betterchests_hint_keep",
@@ -134,7 +140,7 @@ internal static class KeyHintUI
                 HintVisibility.SplitDialogOnly => splitting,
                 HintVisibility.NotSplitting => !splitting,
                 _ => containerOpen && !splitting,
-            };
+            } && (hint.Feature == null || SafePatcher.IsOn(hint.Feature));
 
             GameObject item = row.Items[i];
             if (item.activeSelf != visible)
