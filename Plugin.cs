@@ -27,7 +27,7 @@ public class BetterChestsPlugin : BaseUnityPlugin
 {
     public const string PluginGuid = "javidahmed64592.betterchests";
     public const string PluginName = "Better Chests";
-    public const string PluginVersion = "0.8.1";
+    public const string PluginVersion = "1.0.0";
 
     internal static ManualLogSource _log;
 
