@@ -1,12 +1,12 @@
 # Changelog
 
-## Unreleased
+## 1.0.0
 
-- If a game update breaks part of the mod, only that part turns off and the rest keeps working: search, the nearby chests in item tooltips (and their glow), auto deposit, the split stack buttons and the key hints can each turn off while chest groups, the chest panel and its keys still work. The log says which part is off, in one line. If chest groups or the chest panel break, the whole mod turns off cleanly instead of throwing errors.
-- New `DisabledFeatures` setting under `[Debug]`, for testing: turns parts of the mod off by name.
-- Every keybind is now a key plus an optional modifier (`None`, `Shift`, `Ctrl` or `Alt`), both picked from a list in the config, so combos like Shift + B can be bound without typing them. Settings saved by an older version carry over.
-- With `debugmode` on, this mod's key combos no longer also do what their key does in debug mode, such as Ctrl+Z also toggling flying. A key on its own still does both.
-- Restock, Take All, Deposit All, Place Stacks and Sort can each have a modifier. Sort Group Modifier and Keep Item are still a single held key.
+- First stable release.
+- **Key combos:** every keybind is now a key plus an optional `Modifier` (`None`, `Shift`, `Ctrl` or `Alt`), both picked from a list in the config, so combos like Shift + B can be bound. Sort Group Modifier and Keep Item stay a single held key. Settings from older versions carry over.
+- With `debugmode` on, the mod's key combos no longer also trigger the game's debug keys, such as Ctrl+Z toggling flying.
+- **Safer after game updates:** if an update breaks part of the mod (such as search, nearby chests in tooltips, auto deposit or the split stack buttons), only that part turns off and the log says which, in one line; chest groups, the chest panel and its keys still work. If chest groups or the chest panel breaks, the whole mod turns off cleanly instead of throwing errors.
+- **Debug setting:** the new `DisabledFeatures` setting under `[Debug]` turns parts of the mod off by name, for testing.
 - Updated Jotunn to 2.30.3.
 
 ## 0.8.1
