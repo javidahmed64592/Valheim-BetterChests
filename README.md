@@ -118,10 +118,12 @@ Each item is gathered into a chest of its own as far as the chests allow, then e
 
 Settings are in the BepInEx config file `javidahmed64592.betterchests.cfg`.
 Settings marked "(Synced with server)" use the server's values when the server has the mod installed.
+`DisabledFeatures` under `[Debug]` is for testing: it turns parts of the mod off by name. Leave it empty to play normally.
 
 ## Compatibility
 
 - Other chest mods that add sorting, quick stacking or auto storing (such as Quick Stack - Store - Sort - Trash - Restock) overlap with this mod. Their keys may clash with `R`, `T`, `F`, `G` and `H` (all can be changed in the config file), and their buttons may overlap on the chest panel.
+- If a game update breaks part of the mod, that part turns off on its own and the log says which one; the rest keeps working.
 - This mod has not been tested with a gamepad, only with keyboard and mouse.
 
 ## Uninstalling

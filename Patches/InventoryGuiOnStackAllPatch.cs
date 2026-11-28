@@ -1,3 +1,4 @@
+using BetterChests.Core;
 using BetterChests.Search;
 
 using HarmonyLib;
@@ -6,6 +7,7 @@ namespace BetterChests.Patches;
 
 /// <summary>While searching, Place stacks (the button and its key) tops up stacks anywhere in the chest group.</summary>
 [HarmonyPatch(typeof(InventoryGui), "OnStackAll")]
+[Feature(ChestSearch.Feature)]
 internal static class InventoryGui_OnStackAll_Patch
 {
     private static bool Prefix(InventoryGui __instance)

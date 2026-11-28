@@ -1,4 +1,5 @@
 using BetterChests.Duplicates;
+using BetterChests.Search;
 using BetterChests.UI;
 
 using HarmonyLib;
@@ -11,6 +12,7 @@ internal static class InventoryGui_Update_Patch
 {
     private static void Postfix(InventoryGui __instance)
     {
+        ChestSearch.HideIfOff();
         ChestButtons.HandleKeys(__instance);
         ChestDuplicates.UpdateGlow(__instance);
     }

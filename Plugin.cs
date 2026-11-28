@@ -70,10 +70,14 @@ public class BetterChestsPlugin : BaseUnityPlugin
         ChestDuplicates.BindConfig(Config);
         ChestKeys.BindConfig(Config);
         Translations.Load();
-        CommandManager.Instance.AddConsoleCommand(new SortInfoCommand());
 
         _harmony = new Harmony(PluginGuid);
-        _harmony.PatchAll();
+        if (!SafePatcher.PatchAll(_harmony, Config, Logger))
+        {
+            return;
+        }
+
+        CommandManager.Instance.AddConsoleCommand(new SortInfoCommand());
     }
 
     private void OnDestroy()

@@ -1,3 +1,4 @@
+using BetterChests.Core;
 using BetterChests.Search;
 
 using HarmonyLib;
@@ -6,6 +7,7 @@ namespace BetterChests.Patches;
 
 /// <summary>While searching, the chest grid is filled with the search results instead of the open chest.</summary>
 [HarmonyPatch(typeof(InventoryGrid), nameof(InventoryGrid.UpdateInventory))]
+[Feature(ChestSearch.Feature)]
 internal static class InventoryGrid_UpdateInventory_Patch
 {
     private static void Prefix(InventoryGrid __instance, ref Inventory inventory)

@@ -10,6 +10,12 @@ namespace BetterChests.UI;
 /// </summary>
 internal static class SplitDialogControls
 {
+    /// <summary>
+    /// The - and + buttons and the mouse wheel on the split dialog. Without it, the dialog is vanilla's, with only
+    /// its slider.
+    /// </summary>
+    public const string Feature = "Split stack controls";
+
     private const float ButtonSize = 36f;
     private const float ButtonGap = 8f;
     private const float LabelFontSize = 26f;
