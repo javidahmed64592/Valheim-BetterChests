@@ -8,6 +8,7 @@ using BetterChests.Duplicates;
 using BetterChests.Keys;
 using BetterChests.Search;
 using BetterChests.Sorting;
+using BetterChests.UI;
 
 using HarmonyLib;
 
@@ -59,10 +60,10 @@ public class BetterChestsPlugin : BaseUnityPlugin
             "(the same as the \"Place stacks\" button).");
         _sortKey = BindKey("Sort", "Sort", KeyCode.H,
             "While a chest is open, or while looking at one, sorts its contents (the same as the \"Sort\" button).");
-        _sortGroupKey = BindKey("Sort Group Modifier", "SortGroupModifier", KeyCode.LeftShift,
+        _sortGroupKey = BindHeldKey("Sort Group Modifier", "SortGroupModifier", KeyCode.LeftShift,
             "Hold with the Sort key or button to sort the chest's whole group: each item is gathered into a chest of its own " +
             "as far as the chests allow, and every chest is sorted. The left and right versions of Shift, Ctrl and Alt both work.");
-        _keepItemKey = BindKey("Keep Item", "KeepItem", KeyCode.LeftAlt,
+        _keepItemKey = BindHeldKey("Keep Item", "KeepItem", KeyCode.LeftAlt,
             "Hold and right-click an item in your inventory to mark it to be kept by \"Deposit all\" and " +
             "\"Place stacks\", or to unmark it. The left and right versions of Shift, Ctrl and Alt both work.");
 
@@ -85,19 +86,30 @@ public class BetterChestsPlugin : BaseUnityPlugin
         _harmony?.UnpatchSelf();
     }
 
+    /// <summary>A key that does something, with an optional modifier.</summary>
     private Keybind BindKey(string configName, string buttonName, KeyCode defaultKey, string description)
     {
-        ConfigEntry<KeyCode> entry = Config.Bind("Keybinds", configName, defaultKey,
-            description);
+        KeyBinding binding = KeyBinding.Bind(Config, "Keybinds", configName, defaultKey, KeyModifier.None, description);
+        Register(binding.KeyEntry, buttonName);
+        return new Keybind(binding.KeyEntry, binding);
+    }
 
-        // Registered so the key shows up as a key binding in Jotunn's Mod Settings menu.
+    /// <summary>A key held with a key or a click, such as Shift to sort the whole group.</summary>
+    private Keybind BindHeldKey(string configName, string buttonName, KeyCode defaultKey, string description)
+    {
+        ConfigEntry<KeyCode> entry = Config.Bind("Keybinds", configName, defaultKey, description);
+        Register(entry, buttonName);
+        return new Keybind(entry, null);
+    }
+
+    /// <summary>Registered so the key shows up as a key binding in Jotunn's Mod Settings menu.</summary>
+    private static void Register(ConfigEntry<KeyCode> entry, string buttonName)
+    {
         InputManager.Instance.AddButton(PluginGuid, new ButtonConfig
         {
             Name = "BetterChests_" + buttonName,
             Config = entry
         });
-
-        return new Keybind(entry);
     }
 
     /// <summary>
@@ -114,15 +126,21 @@ public class BetterChestsPlugin : BaseUnityPlugin
 
 /// <summary>
 /// A rebindable key. It is read straight from the keyboard, the way the inventory screen reads Escape:
-/// the registered button did not respond while the inventory was open.
+/// the registered button did not respond while the inventory was open. A key that does something can have a
+/// modifier (<paramref name="binding"/>); a key held with something else can't.
 /// </summary>
-internal sealed class Keybind(ConfigEntry<KeyCode> entry)
+internal sealed class Keybind(ConfigEntry<KeyCode> entry, KeyBinding binding)
 {
     public KeyCode Key => entry.Value;
 
+    /// <summary>The key as the hints show it, with its modifier first: "Ctrl + R".</summary>
+    public string Label => binding != null && binding.Modifier != KeyModifier.None
+        ? binding.Modifier + " + " + KeyHintUI.KeyName(Key)
+        : KeyHintUI.KeyName(Key);
+
     public bool Down()
     {
-        return ZInput.GetKeyDown(entry.Value);
+        return binding != null ? binding.IsDown() : ZInput.GetKeyDown(entry.Value);
     }
 
     /// <summary>

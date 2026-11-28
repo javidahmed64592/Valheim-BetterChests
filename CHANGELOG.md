@@ -4,6 +4,9 @@
 
 - If a game update breaks part of the mod, only that part turns off and the rest keeps working: search, the nearby chests in item tooltips (and their glow), auto deposit, the split stack buttons and the key hints can each turn off while chest groups, the chest panel and its keys still work. The log says which part is off, in one line. If chest groups or the chest panel break, the whole mod turns off cleanly instead of throwing errors.
 - New `DisabledFeatures` setting under `[Debug]`, for testing: turns parts of the mod off by name.
+- Every keybind is now a key plus an optional modifier (`None`, `Shift`, `Ctrl` or `Alt`), both picked from a list in the config, so combos like Shift + B can be bound without typing them. Settings saved by an older version carry over.
+- With `debugmode` on, this mod's key combos no longer also do what their key does in debug mode, such as Ctrl+Z also toggling flying. A key on its own still does both.
+- Restock, Take All, Deposit All, Place Stacks and Sort can each have a modifier. Sort Group Modifier and Keep Item are still a single held key.
 - Updated Jotunn to 2.30.3.
 
 ## 0.8.1
