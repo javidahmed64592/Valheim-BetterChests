@@ -164,12 +164,12 @@ internal static class KeyHintUI
                 {
                     string modifierName = ModifierName(hint.Modifier().Key);
                     TMP_Text second = row.SecondKeyTexts[i];
-                    keyName = second != null ? modifierName : modifierName + " + " + KeyName(key);
-                    dirty |= SetText(second, KeyName(key));
+                    keyName = second != null ? modifierName : modifierName + " + " + hint.Key().Label;
+                    dirty |= SetText(second, hint.Key().Label);
                 }
                 else
                 {
-                    keyName = (hint.WithRightClick ? ModifierName(key) : KeyName(key)) + row.KeySuffixes[i];
+                    keyName = (hint.WithRightClick ? ModifierName(key) : hint.Key().Label) + row.KeySuffixes[i];
                 }
 
                 dirty |= SetText(text, keyName);

@@ -118,6 +118,7 @@ Each item is gathered into a chest of its own as far as the chests allow, then e
 
 Settings are in the BepInEx config file `javidahmed64592.betterchests.cfg`.
 Settings marked "(Synced with server)" use the server's values when the server has the mod installed.
+Each keybind has a key and a `Modifier` (`None`, `Shift`, `Ctrl` or `Alt`), both picked from a list, so combos like Shift + B can be bound.
 `DisabledFeatures` under `[Debug]` is for testing: it turns parts of the mod off by name. Leave it empty to play normally.
 
 ## Compatibility

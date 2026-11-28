@@ -203,11 +203,11 @@ internal static class ChestKeys
 
     private static string Hint(Keybind key, string label)
     {
-        return "[<color=yellow><b>" + KeyHintUI.KeyName(key.Key) + "</b></color>] " + label;
+        return "[<color=yellow><b>" + key.Label + "</b></color>] " + label;
     }
 
     private static string Hint(Keybind modifier, Keybind key, string label)
     {
-        return "[<color=yellow><b>" + KeyHintUI.ModifierName(modifier.Key) + " + " + KeyHintUI.KeyName(key.Key) + "</b></color>] " + label;
+        return "[<color=yellow><b>" + KeyHintUI.ModifierName(modifier.Key) + " + " + key.Label + "</b></color>] " + label;
     }
 }
